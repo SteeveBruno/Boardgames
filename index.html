@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" class="overflow-x-hidden">
+<html lang="fr" class="overflow-x-hidden text-[17px] sm:text-base">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,11 +8,11 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans overflow-x-hidden w-full">
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans overflow-x-hidden w-full text-base">
 
   <div class="max-w-6xl w-full mx-auto px-3 py-4 sm:p-6">
     <!-- Bandeau d'erreur global -->
-    <div id="debug-erreur" class="hidden bg-rose-950/90 border border-rose-500 text-rose-200 p-3.5 rounded-xl mb-6 text-sm whitespace-pre-wrap break-words"></div>
+    <div id="debug-erreur" class="hidden bg-rose-950/90 border border-rose-500 text-rose-200 p-3.5 rounded-xl mb-6 text-sm sm:text-base whitespace-pre-wrap break-words"></div>
 
     <!-- En-tête centré avec grand logo au-dessus du titre et des menus -->
     <header class="flex flex-col items-center text-center border-b border-slate-800 pb-5 mb-6 gap-3.5 w-full">
@@ -29,12 +29,12 @@
       </div>
 
       <div class="w-full px-1">
-        <h1 class="text-xl sm:text-4xl font-bold text-amber-400 tracking-tight">Classement & Statistiques</h1>
-        <p class="text-slate-400 text-xs sm:text-sm mt-1">Barème : 3 / 2 / 1 pt • Jeux courts : 1 pt • 5 réguliers <span class="text-xs text-slate-500">(v22)</span></p>
+        <h1 class="text-2xl sm:text-4xl font-bold text-amber-400 tracking-tight">Classement & Statistiques</h1>
+        <p class="text-slate-400 text-sm mt-1">Barème : 3 / 2 / 1 pt • Jeux courts : 1 pt • 5 réguliers <span class="text-xs text-slate-500">(v23)</span></p>
       </div>
 
       <div class="flex flex-wrap justify-center items-center gap-2.5 pt-1 w-full">
-        <select id="filtre-saison" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm max-w-full">
+        <select id="filtre-saison" class="bg-slate-800 border border-slate-600 rounded-lg px-3.5 py-2 text-sm sm:text-base max-w-full">
           <option value="2026">Saison 2026</option>
           <option value="2025">Saison 2025</option>
           <option value="2024">Saison 2024</option>
@@ -42,26 +42,26 @@
           <option value="2022">Saison 2022</option>
           <option value="all">Toutes saisons (2022–2026)</option>
         </select>
-        <button id="btn-auth" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3 py-1.5 rounded-lg text-sm">
+        <button id="btn-auth" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3.5 py-2 rounded-lg text-sm sm:text-base">
           Connexion Admin
         </button>
       </div>
 
       <!-- Menu de navigation par catégories (adapté mobile sans débordement) -->
       <nav aria-label="Catégories" class="grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-center gap-2 pt-2 w-full max-w-2xl">
-        <button type="button" data-onglet="principal" class="btn-onglet col-span-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-amber-500 text-slate-900">
+        <button type="button" data-onglet="principal" class="btn-onglet col-span-2 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition bg-amber-500 text-slate-900">
           🏆 Classement & Historique
         </button>
-        <button type="button" data-onglet="joueur" class="btn-onglet px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">
+        <button type="button" data-onglet="joueur" class="btn-onglet px-3 py-2.5 rounded-xl text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">
           👤 Stats par joueur
         </button>
-        <button type="button" data-onglet="jeu" class="btn-onglet px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">
+        <button type="button" data-onglet="jeu" class="btn-onglet px-3 py-2.5 rounded-xl text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">
           🎯 Stats par jeu
         </button>
-        <button type="button" data-onglet="palmares" class="btn-onglet px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">
+        <button type="button" data-onglet="palmares" class="btn-onglet px-3 py-2.5 rounded-xl text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">
           👑 Palmarès
         </button>
-        <button type="button" data-onglet="cimetiere" class="btn-onglet px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">
+        <button type="button" data-onglet="cimetiere" class="btn-onglet px-3 py-2.5 rounded-xl text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">
           🪦 Cimetière
         </button>
       </nav>
@@ -72,11 +72,11 @@
 
     <!-- Modale de connexion Admin -->
     <div id="login-box" class="hidden bg-slate-800 border border-slate-700 p-4 rounded-lg mb-6 max-w-md mx-auto">
-      <h2 class="font-bold mb-3 text-amber-400">Connexion Administrateur</h2>
+      <h2 class="font-bold mb-3 text-amber-400 text-lg">Connexion Administrateur</h2>
       <form id="form-login" class="space-y-3">
-        <input type="email" id="login-email" placeholder="Courriel" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
-        <input type="password" id="login-password" placeholder="Mot de passe" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
-        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2 rounded text-sm">Se connecter</button>
+        <input type="email" id="login-email" placeholder="Courriel" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-base sm:text-sm">
+        <input type="password" id="login-password" placeholder="Mot de passe" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-base sm:text-sm">
+        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2.5 rounded text-base sm:text-sm">Se connecter</button>
       </form>
     </div>
 
@@ -85,20 +85,20 @@
       <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-xl w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
         <div class="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
           <div class="min-w-0">
-            <div id="modal-partie-date" class="text-xs text-slate-400"></div>
+            <div id="modal-partie-date" class="text-xs sm:text-sm text-slate-400"></div>
             <h3 id="modal-partie-titre" class="text-lg sm:text-xl font-bold text-amber-400 mt-0.5 break-words"></h3>
           </div>
-          <button type="button" id="btn-fermer-modal-partie" class="shrink-0 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-semibold">
+          <button type="button" id="btn-fermer-modal-partie" class="shrink-0 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-semibold">
             ✕ Fermer
           </button>
         </div>
 
-        <div id="modal-partie-infos" class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+        <div id="modal-partie-infos" class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs sm:text-sm">
           <!-- Rempli par JS -->
         </div>
 
         <div class="overflow-x-auto bg-slate-800/80 rounded-xl border border-slate-700/80">
-          <table class="w-full text-left border-collapse text-xs sm:text-sm">
+          <table class="w-full text-left border-collapse text-sm">
             <thead>
               <tr class="border-b border-slate-700 text-slate-400 text-xs uppercase">
                 <th class="p-2.5">Pos.</th>
@@ -118,8 +118,8 @@
     <!-- Panneau d'édition d'une partie existante (Visible uniquement si connecté et en cours d'édition) -->
     <section id="edit-panel" class="hidden bg-slate-800/95 border border-sky-400/50 p-4 sm:p-5 rounded-xl mb-8 shadow-lg">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-base sm:text-lg font-bold text-sky-400">✏️ Modifier la partie</h2>
-        <button type="button" id="btn-annuler-edit" class="text-xs text-slate-400 hover:text-slate-200 border border-slate-600 px-2.5 py-1 rounded">
+        <h2 class="text-lg font-bold text-sky-400">✏️ Modifier la partie</h2>
+        <button type="button" id="btn-annuler-edit" class="text-xs sm:text-sm text-slate-300 hover:text-white border border-slate-600 px-3 py-1 rounded">
           Annuler
         </button>
       </div>
@@ -127,38 +127,38 @@
         <input type="hidden" id="edit-partie-id">
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
           <div>
-            <label class="block text-xs text-slate-400 mb-1">Date de la partie</label>
-            <input type="date" id="edit-date-partie" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+            <label class="block text-xs sm:text-sm text-slate-400 mb-1">Date de la partie</label>
+            <input type="date" id="edit-date-partie" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-base sm:text-sm">
           </div>
           <div>
-            <label class="block text-xs text-slate-400 mb-1">Nom du jeu</label>
-            <input type="text" id="edit-nom-jeu" list="liste-jeux" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+            <label class="block text-xs sm:text-sm text-slate-400 mb-1">Nom du jeu</label>
+            <input type="text" id="edit-nom-jeu" list="liste-jeux" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-base sm:text-sm">
           </div>
           <div>
-            <label class="block text-xs text-slate-400 mb-1">Type de pointage</label>
-            <select id="edit-mode-points" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+            <label class="block text-xs sm:text-sm text-slate-400 mb-1">Type de pointage</label>
+            <select id="edit-mode-points" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-base sm:text-sm">
               <option value="321">Standard (3 / 2 / 1 pt)</option>
               <option value="1pt">Partie courte (1 pt au gagnant)</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs text-slate-400 mb-1">Durée (min, pas de 5)</label>
-            <input type="number" id="edit-duree-partie" list="liste-durees-5min" min="5" max="600" step="5" placeholder="Ex: 90" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+            <label class="block text-xs sm:text-sm text-slate-400 mb-1">Durée (min, pas de 5)</label>
+            <input type="number" id="edit-duree-partie" list="liste-durees-5min" min="5" max="600" step="5" placeholder="Ex: 90" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-base sm:text-sm">
           </div>
           <div>
-            <label class="block text-xs text-slate-400 mb-1">Lieu</label>
-            <input type="text" id="edit-lieu-partie" placeholder="Ex: Chez Steeve..." class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+            <label class="block text-xs sm:text-sm text-slate-400 mb-1">Lieu</label>
+            <input type="text" id="edit-lieu-partie" placeholder="Ex: Chez Steeve..." class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-base sm:text-sm">
           </div>
         </div>
 
         <div>
-          <label class="block text-xs text-slate-400 mb-2">Position ajustée automatiquement selon le score (modifiable manuellement ; « Absent » si non participant)</label>
+          <label class="block text-xs sm:text-sm text-slate-400 mb-2">Position ajustée automatiquement selon le score (modifiable manuellement ; « Absent » si non participant)</label>
           <div id="edit-grille-joueurs" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3">
             <!-- Généré en JS -->
           </div>
         </div>
 
-        <button type="submit" class="w-full sm:w-auto bg-sky-600 hover:bg-sky-500 text-white font-bold px-5 py-2 rounded text-sm">
+        <button type="submit" class="w-full sm:w-auto bg-sky-600 hover:bg-sky-500 text-white font-bold px-5 py-2.5 rounded text-base sm:text-sm">
           Sauvegarder les modifications
         </button>
       </form>
@@ -166,43 +166,43 @@
 
     <!-- Formulaire d'ajout de partie (Visible uniquement si connecté) -->
     <section id="admin-panel" class="hidden bg-slate-800/80 border border-amber-500/40 p-4 sm:p-5 rounded-xl mb-8">
-      <h2 class="text-base sm:text-lg font-bold text-amber-400 mb-4">➕ Ajouter une partie</h2>
+      <h2 class="text-lg font-bold text-amber-400 mb-4">➕ Ajouter une partie</h2>
       <form id="form-partie" class="space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
           <div>
-            <label class="block text-xs text-slate-400 mb-1">Date de la partie</label>
-            <input type="date" id="date-partie" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+            <label class="block text-xs sm:text-sm text-slate-400 mb-1">Date de la partie</label>
+            <input type="date" id="date-partie" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-base sm:text-sm">
           </div>
           <div>
-            <label class="block text-xs text-slate-400 mb-1">Nom du jeu</label>
-            <input type="text" id="nom-jeu" list="liste-jeux" placeholder="Ex: Earth, Hitster..." required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+            <label class="block text-xs sm:text-sm text-slate-400 mb-1">Nom du jeu</label>
+            <input type="text" id="nom-jeu" list="liste-jeux" placeholder="Ex: Earth, Hitster..." required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-base sm:text-sm">
             <datalist id="liste-jeux"></datalist>
           </div>
           <div>
-            <label class="block text-xs text-slate-400 mb-1">Type de pointage</label>
-            <select id="mode-points" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+            <label class="block text-xs sm:text-sm text-slate-400 mb-1">Type de pointage</label>
+            <select id="mode-points" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-base sm:text-sm">
               <option value="321" selected>Standard (3 / 2 / 1 pt)</option>
               <option value="1pt">Partie courte (1 pt au gagnant)</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs text-slate-400 mb-1">Durée (min, pas de 5)</label>
-            <input type="number" id="duree-partie" list="liste-durees-5min" min="5" max="600" step="5" placeholder="Ex: 75" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+            <label class="block text-xs sm:text-sm text-slate-400 mb-1">Durée (min, pas de 5)</label>
+            <input type="number" id="duree-partie" list="liste-durees-5min" min="5" max="600" step="5" placeholder="Ex: 75" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-base sm:text-sm">
           </div>
           <div>
-            <label class="block text-xs text-slate-400 mb-1">Lieu</label>
-            <input type="text" id="lieu-partie" placeholder="Ex: Chez Louis..." class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+            <label class="block text-xs sm:text-sm text-slate-400 mb-1">Lieu</label>
+            <input type="text" id="lieu-partie" placeholder="Ex: Chez Louis..." class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-base sm:text-sm">
           </div>
         </div>
 
         <div>
-          <label class="block text-xs text-slate-400 mb-2">Résultats par joueur (présent par défaut ; choisir « Absent » si un joueur n'a pas joué)</label>
+          <label class="block text-xs sm:text-sm text-slate-400 mb-2">Résultats par joueur (présent par défaut ; choisir « Absent » si un joueur n'a pas joué)</label>
           <div id="grille-joueurs" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3">
             <!-- Généré en JS -->
           </div>
         </div>
 
-        <button type="submit" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2 rounded text-sm">
+        <button type="submit" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2.5 rounded text-base sm:text-sm">
           Enregistrer les résultats
         </button>
       </form>
@@ -212,23 +212,23 @@
     <div id="onglet-principal" class="w-full">
       <!-- Tableau du Classement Général (compact sur cellulaire, complet sur grand écran) -->
       <section class="mb-8 sm:mb-10 w-full">
-        <h2 class="text-lg sm:text-xl font-bold mb-3">🏆 Classement</h2>
+        <h2 class="text-xl font-bold mb-3">🏆 Classement</h2>
         <div class="w-full overflow-x-auto bg-slate-800 rounded-xl border border-slate-700">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="border-b border-slate-700 text-slate-400 text-[11px] sm:text-xs uppercase">
-                <th class="py-2.5 px-2 sm:p-3">#</th>
-                <th class="py-2.5 px-2 sm:p-3">Joueur</th>
-                <th class="py-2.5 px-2 sm:p-3 text-center">Pts</th>
-                <th class="py-2.5 px-2 sm:p-3 text-center">Part.</th>
+              <tr class="border-b border-slate-700 text-slate-400 text-xs uppercase">
+                <th class="py-2.5 px-1.5 sm:p-3">#</th>
+                <th class="py-2.5 px-1.5 sm:p-3">Joueur</th>
+                <th class="py-2.5 px-1.5 sm:p-3 text-center">Pts</th>
+                <th class="py-2.5 px-1.5 sm:p-3 text-center">Part.</th>
                 <th class="hidden sm:table-cell p-3 text-center">Moy./Partie</th>
-                <th class="py-2.5 px-2 sm:p-3 text-center">🥇</th>
+                <th class="py-2.5 px-1.5 sm:p-3 text-center">🥇</th>
                 <th class="hidden md:table-cell p-3 text-center">🥈 2e</th>
                 <th class="hidden md:table-cell p-3 text-center">🥉 3e</th>
-                <th class="py-2.5 px-2 sm:p-3 text-center">% Vic.</th>
+                <th class="py-2.5 px-1.5 sm:p-3 text-center">% Vic.</th>
               </tr>
             </thead>
-            <tbody id="tbody-classement" class="divide-y divide-slate-700/60 text-xs sm:text-sm">
+            <tbody id="tbody-classement" class="divide-y divide-slate-700/60 text-sm">
               <!-- Rempli par JS -->
             </tbody>
           </table>
@@ -237,7 +237,7 @@
 
       <!-- Graphique d'évolution des points -->
       <section class="mb-8 sm:mb-10 bg-slate-800 border border-slate-700 p-3.5 sm:p-5 rounded-xl w-full">
-        <h2 id="titre-graphique" class="text-base sm:text-xl font-bold mb-3">📈 Évolution cumulative des points</h2>
+        <h2 id="titre-graphique" class="text-lg sm:text-xl font-bold mb-3">📈 Évolution cumulative des points</h2>
         <div class="relative h-64 sm:h-80 w-full">
           <canvas id="chart-evolution"></canvas>
         </div>
@@ -245,7 +245,7 @@
 
       <!-- Historique des parties -->
       <section class="w-full">
-        <h2 class="text-lg sm:text-xl font-bold mb-3">📅 Historique des parties</h2>
+        <h2 class="text-xl font-bold mb-3">📅 Historique des parties</h2>
         <div id="liste-parties" class="space-y-3">
           <!-- Rempli par JS -->
         </div>
@@ -256,8 +256,8 @@
     <div id="onglet-joueur" class="hidden w-full">
       <section class="mb-10 bg-slate-800/70 border border-slate-700 p-4 sm:p-5 rounded-xl">
         <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
-          <h2 class="text-lg sm:text-xl font-bold">👤 Statistiques par joueur</h2>
-          <select id="select-joueur-stats" class="bg-slate-900 border border-slate-600 rounded px-3 py-1.5 text-sm font-semibold">
+          <h2 class="text-xl font-bold">👤 Statistiques par joueur</h2>
+          <select id="select-joueur-stats" class="bg-slate-900 border border-slate-600 rounded px-3.5 py-2 text-base sm:text-sm font-semibold">
             <!-- Rempli par JS -->
           </select>
         </div>
@@ -271,18 +271,18 @@
     <!-- CATÉGORIE 3 : Statistiques par jeu -->
     <div id="onglet-jeu" class="hidden w-full">
       <section class="mb-10">
-        <h2 class="text-lg sm:text-xl font-bold mb-3">🎯 Statistiques par jeu</h2>
+        <h2 class="text-xl font-bold mb-3">🎯 Statistiques par jeu</h2>
         <div class="w-full overflow-x-auto bg-slate-800 rounded-xl border border-slate-700">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="border-b border-slate-700 text-slate-400 text-[11px] sm:text-xs uppercase">
-                <th class="py-2.5 px-2.5 sm:p-3">Jeu</th>
-                <th class="py-2.5 px-2 sm:p-3 text-center">Parties</th>
-                <th class="py-2.5 px-2 sm:p-3 text-center">Pts dist.</th>
-                <th class="py-2.5 px-2.5 sm:p-3">Gagnant(s) fréquent(s)</th>
+              <tr class="border-b border-slate-700 text-slate-400 text-xs uppercase">
+                <th class="py-2.5 px-2 sm:p-3">Jeu</th>
+                <th class="py-2.5 px-1.5 sm:p-3 text-center">Parties</th>
+                <th class="py-2.5 px-1.5 sm:p-3 text-center">Pts</th>
+                <th class="py-2.5 px-2 sm:p-3">Gagnant(s)</th>
               </tr>
             </thead>
-            <tbody id="tbody-stats-jeux" class="divide-y divide-slate-700/60 text-xs sm:text-sm">
+            <tbody id="tbody-stats-jeux" class="divide-y divide-slate-700/60 text-sm">
               <!-- Rempli par JS -->
             </tbody>
           </table>
@@ -293,7 +293,7 @@
     <!-- CATÉGORIE 4 : Palmarès des champions (2011 - 2026) -->
     <div id="onglet-palmares" class="hidden w-full">
       <section class="mb-10">
-        <h2 class="text-lg sm:text-xl font-bold mb-3">👑 Palmarès des champions (2011–2026)</h2>
+        <h2 class="text-xl font-bold mb-3">👑 Palmarès des champions (2011–2026)</h2>
         <div id="grille-palmares" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2.5 sm:gap-3">
           <!-- Rempli par JS -->
         </div>
@@ -304,8 +304,8 @@
     <div id="onglet-cimetiere" class="hidden w-full">
       <section class="mb-10 bg-slate-800/70 border border-slate-700 p-4 sm:p-6 rounded-xl space-y-5">
         <div>
-          <h2 class="text-lg sm:text-xl font-bold text-slate-200">🪦 Le Cimetière des Anciens Joueurs</h2>
-          <p class="text-slate-400 text-xs sm:text-sm mt-1">
+          <h2 class="text-xl font-bold text-slate-200">🪦 Le Cimetière des Anciens Joueurs</h2>
+          <p class="text-slate-400 text-sm mt-1">
             Hommage ludique aux deux anciens joueurs qui ont quitté la table de la ligue.
           </p>
         </div>
@@ -313,20 +313,20 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <article class="bg-slate-900/90 border border-slate-700 rounded-xl p-4 space-y-2">
             <div class="flex flex-wrap items-center justify-between gap-2">
-              <h3 class="text-lg font-bold text-amber-400">🪦 Kévin</h3>
-              <span class="text-xs text-sky-400 bg-slate-800 border border-slate-700 px-2.5 py-0.5 rounded-full">Porte-étendard du bleu</span>
+              <h3 class="text-lg sm:text-xl font-bold text-amber-400">🪦 Kévin</h3>
+              <span class="text-xs sm:text-sm text-sky-400 bg-slate-800 border border-slate-700 px-2.5 py-0.5 rounded-full">Porte-étendard du bleu</span>
             </div>
-            <p class="text-sm text-slate-300 italic">
+            <p class="text-base sm:text-sm text-slate-300 italic leading-relaxed">
               « Jadis fier porte-étendard du bleu, la rumeur court que cet ancien joueur se serait fait prendre la main dans le sac... Dans le sac de tuiles de Carcassonne! »
             </p>
           </article>
 
           <article class="bg-slate-900/90 border border-slate-700 rounded-xl p-4 space-y-2">
             <div class="flex flex-wrap items-center justify-between gap-2">
-              <h3 class="text-lg font-bold text-amber-400">🪦 Étienne</h3>
-              <span class="text-xs text-slate-400 bg-slate-800 border border-slate-700 px-2.5 py-0.5 rounded-full">Absorption ployesque</span>
+              <h3 class="text-lg sm:text-xl font-bold text-amber-400">🪦 Étienne</h3>
+              <span class="text-xs sm:text-sm text-slate-400 bg-slate-800 border border-slate-700 px-2.5 py-0.5 rounded-full">Absorption ployesque</span>
             </div>
-            <p class="text-sm text-slate-300 italic">
+            <p class="text-base sm:text-sm text-slate-300 italic leading-relaxed">
               « La légende raconte qu'il se serait rentré ses ployes tellement creux dans le nez qu'il aurait été absorbé par celles-ci. »
             </p>
           </article>
@@ -447,8 +447,8 @@
         const actif = btn.dataset.onglet === nomOnglet;
         const spanClass = btn.dataset.onglet === 'principal' ? 'col-span-2 ' : '';
         btn.className = actif
-          ? `btn-onglet ${spanClass}px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-amber-500 text-slate-900`
-          : `btn-onglet ${spanClass}px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700`;
+          ? `btn-onglet ${spanClass}px-3.5 py-2.5 rounded-xl text-sm font-semibold transition bg-amber-500 text-slate-900`
+          : `btn-onglet ${spanClass}px-3 py-2.5 rounded-xl text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700`;
       });
 
       if (nomOnglet === 'principal') {
@@ -483,7 +483,7 @@
             <span class="font-semibold text-sm truncate">${j.nom}</span>
           </div>
           <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <select id="${posId}" data-joueur-id="${j.id}" class="select-pos bg-slate-800 border border-slate-600 rounded px-1.5 sm:px-2 py-1 text-xs">
+            <select id="${posId}" data-joueur-id="${j.id}" class="select-pos bg-slate-800 border border-slate-600 rounded px-1.5 sm:px-2 py-1 text-sm sm:text-xs">
               <option value="" ${sel('')}>Absent</option>
               <option value="1" ${sel('1')}>1er</option>
               <option value="2" ${sel('2')}>2e</option>
@@ -498,7 +498,7 @@
               step="any"
               placeholder="Score"
               aria-label="Score de ${j.nom}"
-              class="input-score w-16 sm:w-20 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-right"
+              class="input-score w-16 sm:w-20 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-sm sm:text-xs text-right"
             >
             <span class="pts-apercu text-xs font-bold text-amber-400 w-9 sm:w-11 text-right">—</span>
           </div>
@@ -728,20 +728,20 @@
         const winRate = j.parties > 0 ? Math.round((j.p1 / j.parties) * 100) + '%' : '0%';
         return `
           <tr class="hover:bg-slate-700/30">
-            <td class="py-2.5 px-2 sm:p-3 font-bold text-slate-400">${idx + 1}</td>
-            <td class="py-2.5 px-2 sm:p-3 font-semibold">
+            <td class="py-2.5 px-1.5 sm:p-3 font-bold text-slate-400">${idx + 1}</td>
+            <td class="py-2.5 px-1.5 sm:p-3 font-semibold">
               <span class="inline-flex items-center gap-1.5 sm:gap-2">
                 <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full shrink-0 inline-block" style="background:${j.couleur}"></span>
                 <span>${j.nom}</span>
               </span>
             </td>
-            <td class="py-2.5 px-2 sm:p-3 text-center font-bold text-amber-400 text-sm sm:text-base">${j.points}</td>
-            <td class="py-2.5 px-2 sm:p-3 text-center">${j.parties}</td>
+            <td class="py-2.5 px-1.5 sm:p-3 text-center font-bold text-amber-400 text-base">${j.points}</td>
+            <td class="py-2.5 px-1.5 sm:p-3 text-center">${j.parties}</td>
             <td class="hidden sm:table-cell p-3 text-center text-slate-300">${moy}</td>
-            <td class="py-2.5 px-2 sm:p-3 text-center">${j.p1}</td>
+            <td class="py-2.5 px-1.5 sm:p-3 text-center">${j.p1}</td>
             <td class="hidden md:table-cell p-3 text-center">${j.p2}</td>
             <td class="hidden md:table-cell p-3 text-center">${j.p3}</td>
-            <td class="py-2.5 px-2 sm:p-3 text-center text-emerald-400">${winRate}</td>
+            <td class="py-2.5 px-1.5 sm:p-3 text-center text-emerald-400">${winRate}</td>
           </tr>
         `;
       }).join('');
@@ -876,32 +876,32 @@
       conteneur.innerHTML = `
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
           <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg">
-            <div class="text-xs text-slate-400">Points / Parties</div>
-            <div class="text-lg sm:text-xl font-bold text-amber-400">${totalPts} pts <span class="text-xs sm:text-sm text-slate-400 font-normal">(${totalParties} p.)</span></div>
-            <div class="text-xs text-slate-400 mt-0.5">Moy. : ${moyGlobale} pt/p. • ${winRate} victoires</div>
+            <div class="text-xs sm:text-sm text-slate-400">Points / Parties</div>
+            <div class="text-xl font-bold text-amber-400">${totalPts} pts <span class="text-sm text-slate-400 font-normal">(${totalParties} p.)</span></div>
+            <div class="text-xs sm:text-sm text-slate-400 mt-0.5">Moy. : ${moyGlobale} pt/p. • ${winRate} victoires</div>
           </div>
           <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg">
-            <div class="text-xs text-slate-400">Jeu le plus joué</div>
-            <div class="text-sm font-bold text-slate-100 mt-1 break-words">${jeuPlusJoue ? jeuPlusJoue.jeu : '—'}</div>
-            <div class="text-xs text-slate-400">${jeuPlusJoue ? `${jeuPlusJoue.parties} partie(s) • ${jeuPlusJoue.points} pt(s)` : ''}</div>
+            <div class="text-xs sm:text-sm text-slate-400">Jeu le plus joué</div>
+            <div class="text-base sm:text-sm font-bold text-slate-100 mt-1 break-words">${jeuPlusJoue ? jeuPlusJoue.jeu : '—'}</div>
+            <div class="text-xs sm:text-sm text-slate-400">${jeuPlusJoue ? `${jeuPlusJoue.parties} partie(s) • ${jeuPlusJoue.points} pt(s)` : ''}</div>
           </div>
           <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg">
-            <div class="text-xs text-emerald-400">Meilleur rendement</div>
-            <div class="text-sm font-bold text-slate-100 mt-1 break-words">${jeuFetiche ? jeuFetiche.jeu : '—'}</div>
-            <div class="text-xs text-slate-400">${jeuFetiche ? `Moy. ${(jeuFetiche.points / jeuFetiche.parties).toFixed(2)} pt/p. (${jeuFetiche.victoires} 🥇)` : ''}</div>
+            <div class="text-xs sm:text-sm text-emerald-400">Meilleur rendement</div>
+            <div class="text-base sm:text-sm font-bold text-slate-100 mt-1 break-words">${jeuFetiche ? jeuFetiche.jeu : '—'}</div>
+            <div class="text-xs sm:text-sm text-slate-400">${jeuFetiche ? `Moy. ${(jeuFetiche.points / jeuFetiche.parties).toFixed(2)} pt/p. (${jeuFetiche.victoires} 🥇)` : ''}</div>
           </div>
           <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg">
-            <div class="text-xs text-rose-400">Bête noire (≥ 2 parties)</div>
-            <div class="text-sm font-bold text-slate-100 mt-1 break-words">${beteNoire ? beteNoire.jeu : '—'}</div>
-            <div class="text-xs text-slate-400">${beteNoire ? `Moy. ${(beteNoire.points / beteNoire.parties).toFixed(2)} pt/p. (${beteNoire.points} pt(s))` : 'Pas assez de parties'}</div>
+            <div class="text-xs sm:text-sm text-rose-400">Bête noire (≥ 2 parties)</div>
+            <div class="text-base sm:text-sm font-bold text-slate-100 mt-1 break-words">${beteNoire ? beteNoire.jeu : '—'}</div>
+            <div class="text-xs sm:text-sm text-slate-400">${beteNoire ? `Moy. ${(beteNoire.points / beteNoire.parties).toFixed(2)} pt/p. (${beteNoire.points} pt(s))` : 'Pas assez de parties'}</div>
           </div>
         </div>
 
         ${jeuxArray.length > 0 ? `
           <div class="w-full overflow-x-auto bg-slate-900/70 rounded-lg border border-slate-700/80">
-            <table class="w-full text-left border-collapse text-xs sm:text-sm">
+            <table class="w-full text-left border-collapse text-sm">
               <thead>
-                <tr class="border-b border-slate-700 text-slate-400 text-[11px] sm:text-xs uppercase">
+                <tr class="border-b border-slate-700 text-slate-400 text-xs uppercase">
                   <th class="p-2.5">Jeu</th>
                   <th class="p-2.5 text-center">Part.</th>
                   <th class="p-2.5 text-center">Pts</th>
@@ -957,10 +957,10 @@
           : '—';
         return `
           <tr class="hover:bg-slate-700/30">
-            <td class="py-2.5 px-2.5 sm:p-3 font-semibold">${j.nom}</td>
-            <td class="py-2.5 px-2 sm:p-3 text-center font-bold text-amber-400">${j.parties}</td>
-            <td class="py-2.5 px-2 sm:p-3 text-center">${j.pointsTotal}</td>
-            <td class="py-2.5 px-2.5 sm:p-3 text-slate-300">${gagnantsTexte}</td>
+            <td class="py-2.5 px-2 sm:p-3 font-semibold">${j.nom}</td>
+            <td class="py-2.5 px-1.5 sm:p-3 text-center font-bold text-amber-400">${j.parties}</td>
+            <td class="py-2.5 px-1.5 sm:p-3 text-center">${j.pointsTotal}</td>
+            <td class="py-2.5 px-2 sm:p-3 text-slate-300">${gagnantsTexte}</td>
           </tr>
         `;
       }).join('');
@@ -992,9 +992,9 @@
 
       document.getElementById('grille-palmares').innerHTML = cartes.map(item => `
         <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl text-center flex flex-col justify-between">
-          <div class="text-xs font-bold text-slate-400">${item.saison}</div>
-          <div class="text-sm font-bold text-amber-400 my-1 truncate" title="${item.champion}">${item.champion}</div>
-          <div class="text-[11px] text-slate-400">${item.sousTitre}</div>
+          <div class="text-xs sm:text-sm font-bold text-slate-400">${item.saison}</div>
+          <div class="text-base sm:text-sm font-bold text-amber-400 my-1 truncate" title="${item.champion}">${item.champion}</div>
+          <div class="text-xs sm:text-[11px] text-slate-400">${item.sousTitre}</div>
         </div>
       `).join('');
     }
@@ -1073,7 +1073,7 @@
           const medaille = r.position === 1 ? '🥇' : r.position === 2 ? '🥈' : r.position === 3 ? '🥉' : `${r.position}e`;
           const nomJoueur = r.joueurs ? r.joueurs.nom : 'Joueur';
           const scoreTxt = (r.score !== null && r.score !== undefined && r.score !== '') ? ` • score ${r.score}` : '';
-          return `<span class="bg-slate-900 border border-slate-700 px-2 py-1 rounded text-xs">
+          return `<span class="bg-slate-900 border border-slate-700 px-2.5 py-1 rounded text-xs sm:text-xs">
             ${medaille} <strong>${nomJoueur}</strong> <span class="text-amber-400">(${r.points} pt${r.points > 1 ? 's' : ''}${scoreTxt})</span>
           </span>`;
         }).join(' ');
@@ -1085,21 +1085,21 @@
         ].filter(Boolean).join(' • ');
 
         const actionsAdmin = isAdmin
-          ? `<button type="button" onclick="event.stopPropagation(); ouvrirEditionPartie(${p.id})" class="text-sky-400 hover:text-sky-300 text-xs ml-1.5">Modifier</button>
-             <button type="button" onclick="event.stopPropagation(); supprimerPartie(${p.id})" class="text-red-400 hover:text-red-300 text-xs ml-1.5">Supprimer</button>`
+          ? `<button type="button" onclick="event.stopPropagation(); ouvrirEditionPartie(${p.id})" class="text-sky-400 hover:text-sky-300 text-xs sm:text-sm ml-1.5">Modifier</button>
+             <button type="button" onclick="event.stopPropagation(); supprimerPartie(${p.id})" class="text-red-400 hover:text-red-300 text-xs sm:text-sm ml-1.5">Supprimer</button>`
           : '';
 
         return `
           <div onclick="ouvrirDetailsPartie(${p.id})" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();ouvrirDetailsPartie(${p.id});}" class="bg-slate-800 hover:bg-slate-800/80 border border-slate-700 hover:border-amber-500/40 p-3.5 sm:p-4 rounded-xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2.5 sm:gap-3 cursor-pointer transition w-full">
             <div class="min-w-0">
-              <div class="text-xs text-slate-400 flex flex-wrap items-center gap-1.5">
+              <div class="text-xs sm:text-sm text-slate-400 flex flex-wrap items-center gap-1.5">
                 <span>${p.date_partie}</span>
                 ${metaInfos ? `<span>• ${metaInfos}</span>` : ''}
                 ${actionsAdmin}
               </div>
-              <div class="font-bold text-base text-slate-100 mt-0.5 flex flex-wrap items-center gap-2">
+              <div class="font-bold text-base sm:text-lg text-slate-100 mt-0.5 flex flex-wrap items-center gap-2">
                 <span class="break-words">${p.nom_jeu}</span>
-                <span class="text-[11px] font-normal text-amber-400/80">🔍 Détails</span>
+                <span class="text-xs font-normal text-amber-400/80">🔍 Détails</span>
               </div>
             </div>
             <div class="flex flex-wrap gap-1.5 sm:gap-2">${badges || '<span class="text-xs text-slate-500 italic">Aucun résultat enregistré</span>'}</div>
