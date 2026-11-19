@@ -30,7 +30,7 @@
 
       <div class="w-full px-1">
         <h1 class="text-2xl sm:text-4xl font-bold text-amber-400 tracking-tight">Classement & Statistiques</h1>
-        <p class="text-slate-400 text-sm mt-1">Barème : 3 / 2 / 1 pt • Jeux courts : 1 pt • 5 réguliers <span class="text-xs text-slate-500">(v23)</span></p>
+        <p class="text-slate-400 text-sm mt-1">Barème : 3 / 2 / 1 pt • Jeux courts : 1 pt • 5 réguliers <span class="text-xs text-slate-500">(v24)</span></p>
       </div>
 
       <div class="flex flex-wrap justify-center items-center gap-2.5 pt-1 w-full">
@@ -210,22 +210,29 @@
 
     <!-- CATÉGORIE 1 : Classement, Graphique & Historique -->
     <div id="onglet-principal" class="w-full">
-      <!-- Tableau du Classement Général (compact sur cellulaire, complet sur grand écran) -->
+      <!-- Classement Général : cartes empilées sur cellulaire, tableau sur sm+ -->
       <section class="mb-8 sm:mb-10 w-full">
         <h2 class="text-xl font-bold mb-3">🏆 Classement</h2>
-        <div class="w-full overflow-x-auto bg-slate-800 rounded-xl border border-slate-700">
+
+        <!-- Vue mobile : un joueur par-dessus l'autre -->
+        <div id="liste-classement-mobile" class="sm:hidden space-y-2.5">
+          <!-- Rempli par JS -->
+        </div>
+
+        <!-- Vue tablette/bureau -->
+        <div class="hidden sm:block w-full overflow-x-auto bg-slate-800 rounded-xl border border-slate-700">
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="border-b border-slate-700 text-slate-400 text-xs uppercase">
-                <th class="py-2.5 px-1.5 sm:p-3">#</th>
-                <th class="py-2.5 px-1.5 sm:p-3">Joueur</th>
-                <th class="py-2.5 px-1.5 sm:p-3 text-center">Pts</th>
-                <th class="py-2.5 px-1.5 sm:p-3 text-center">Part.</th>
-                <th class="hidden sm:table-cell p-3 text-center">Moy./Partie</th>
-                <th class="py-2.5 px-1.5 sm:p-3 text-center">🥇</th>
-                <th class="hidden md:table-cell p-3 text-center">🥈 2e</th>
-                <th class="hidden md:table-cell p-3 text-center">🥉 3e</th>
-                <th class="py-2.5 px-1.5 sm:p-3 text-center">% Vic.</th>
+                <th class="p-3">#</th>
+                <th class="p-3">Joueur</th>
+                <th class="p-3 text-center">Pts</th>
+                <th class="p-3 text-center">Parties</th>
+                <th class="p-3 text-center">Moy./Partie</th>
+                <th class="p-3 text-center">🥇 1er</th>
+                <th class="p-3 text-center">🥈 2e</th>
+                <th class="p-3 text-center">🥉 3e</th>
+                <th class="p-3 text-center">% Victoire</th>
               </tr>
             </thead>
             <tbody id="tbody-classement" class="divide-y divide-slate-700/60 text-sm">
@@ -728,21 +735,42 @@
         const winRate = j.parties > 0 ? Math.round((j.p1 / j.parties) * 100) + '%' : '0%';
         return `
           <tr class="hover:bg-slate-700/30">
-            <td class="py-2.5 px-1.5 sm:p-3 font-bold text-slate-400">${idx + 1}</td>
-            <td class="py-2.5 px-1.5 sm:p-3 font-semibold">
-              <span class="inline-flex items-center gap-1.5 sm:gap-2">
-                <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full shrink-0 inline-block" style="background:${j.couleur}"></span>
-                <span>${j.nom}</span>
-              </span>
+            <td class="p-3 font-bold text-slate-400">${idx + 1}</td>
+            <td class="p-3 font-semibold flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full inline-block" style="background:${j.couleur}"></span>
+              ${j.nom}
             </td>
-            <td class="py-2.5 px-1.5 sm:p-3 text-center font-bold text-amber-400 text-base">${j.points}</td>
-            <td class="py-2.5 px-1.5 sm:p-3 text-center">${j.parties}</td>
-            <td class="hidden sm:table-cell p-3 text-center text-slate-300">${moy}</td>
-            <td class="py-2.5 px-1.5 sm:p-3 text-center">${j.p1}</td>
-            <td class="hidden md:table-cell p-3 text-center">${j.p2}</td>
-            <td class="hidden md:table-cell p-3 text-center">${j.p3}</td>
-            <td class="py-2.5 px-1.5 sm:p-3 text-center text-emerald-400">${winRate}</td>
+            <td class="p-3 text-center font-bold text-amber-400 text-base">${j.points}</td>
+            <td class="p-3 text-center">${j.parties}</td>
+            <td class="p-3 text-center text-slate-300">${moy}</td>
+            <td class="p-3 text-center">${j.p1}</td>
+            <td class="p-3 text-center">${j.p2}</td>
+            <td class="p-3 text-center">${j.p3}</td>
+            <td class="p-3 text-center text-emerald-400">${winRate}</td>
           </tr>
+        `;
+      }).join('');
+
+      document.getElementById('liste-classement-mobile').innerHTML = classement.map((j, idx) => {
+        const moy = j.parties > 0 ? (j.points / j.parties).toFixed(2) : '0.00';
+        const winRate = j.parties > 0 ? Math.round((j.p1 / j.parties) * 100) + '%' : '0%';
+        return `
+          <div class="bg-slate-800 border border-slate-700 rounded-xl p-3.5 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="font-bold text-slate-400 text-base">#${idx + 1}</span>
+                <span class="w-3 h-3 rounded-full shrink-0" style="background:${j.couleur}"></span>
+                <span class="font-bold text-base truncate">${j.nom}</span>
+              </div>
+              <span class="font-bold text-amber-400 text-lg shrink-0">${j.points} pts</span>
+            </div>
+            <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs sm:text-sm text-slate-300 pt-1 border-t border-slate-700/70">
+              <span><strong>${j.parties}</strong> parties</span>
+              <span>Moy. <strong>${moy}</strong></span>
+              <span>🥇 <strong>${j.p1}</strong> • 🥈 <strong>${j.p2}</strong> • 🥉 <strong>${j.p3}</strong></span>
+              <span class="text-emerald-400 font-semibold">${winRate} vic.</span>
+            </div>
+          </div>
         `;
       }).join('');
     }
@@ -1073,10 +1101,10 @@
           const medaille = r.position === 1 ? '🥇' : r.position === 2 ? '🥈' : r.position === 3 ? '🥉' : `${r.position}e`;
           const nomJoueur = r.joueurs ? r.joueurs.nom : 'Joueur';
           const scoreTxt = (r.score !== null && r.score !== undefined && r.score !== '') ? ` • score ${r.score}` : '';
-          return `<span class="bg-slate-900 border border-slate-700 px-2.5 py-1 rounded text-xs sm:text-xs">
+          return `<div class="bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-lg text-xs sm:text-sm w-full sm:w-auto">
             ${medaille} <strong>${nomJoueur}</strong> <span class="text-amber-400">(${r.points} pt${r.points > 1 ? 's' : ''}${scoreTxt})</span>
-          </span>`;
-        }).join(' ');
+          </div>`;
+        }).join('');
 
         const dureeAffichee = formaterDureeAffichage(p.duree);
         const metaInfos = [
@@ -1090,7 +1118,7 @@
           : '';
 
         return `
-          <div onclick="ouvrirDetailsPartie(${p.id})" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();ouvrirDetailsPartie(${p.id});}" class="bg-slate-800 hover:bg-slate-800/80 border border-slate-700 hover:border-amber-500/40 p-3.5 sm:p-4 rounded-xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2.5 sm:gap-3 cursor-pointer transition w-full">
+          <div onclick="ouvrirDetailsPartie(${p.id})" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();ouvrirDetailsPartie(${p.id});}" class="bg-slate-800 hover:bg-slate-800/80 border border-slate-700 hover:border-amber-500/40 p-3.5 sm:p-4 rounded-xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 cursor-pointer transition w-full">
             <div class="min-w-0">
               <div class="text-xs sm:text-sm text-slate-400 flex flex-wrap items-center gap-1.5">
                 <span>${p.date_partie}</span>
@@ -1102,7 +1130,7 @@
                 <span class="text-xs font-normal text-amber-400/80">🔍 Détails</span>
               </div>
             </div>
-            <div class="flex flex-wrap gap-1.5 sm:gap-2">${badges || '<span class="text-xs text-slate-500 italic">Aucun résultat enregistré</span>'}</div>
+            <div class="flex flex-col sm:flex-row sm:flex-wrap gap-1.5 sm:gap-2 w-full sm:w-auto">${badges || '<span class="text-xs text-slate-500 italic">Aucun résultat enregistré</span>'}</div>
           </div>
         `;
       }).join('');
