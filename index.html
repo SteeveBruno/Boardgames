@@ -11,8 +11,8 @@
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
 
   <div class="max-w-6xl mx-auto p-4 sm:p-6">
-    <!-- Bandeau d'erreur éventuel -->
-    <div id="debug-erreur" class="hidden bg-rose-950/90 border border-rose-500 text-rose-200 p-3.5 rounded-xl mb-6 text-sm"></div>
+    <!-- Bandeau d'erreur global -->
+    <div id="debug-erreur" class="hidden bg-rose-950/90 border border-rose-500 text-rose-200 p-3.5 rounded-xl mb-6 text-sm whitespace-pre-wrap"></div>
 
     <!-- En-tête avec emplacement du Logo -->
     <header class="flex flex-wrap justify-between items-center border-b border-slate-700 pb-4 mb-6 gap-4">
@@ -28,7 +28,7 @@
         </div>
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold text-amber-400">Classement & Statistiques</h1>
-          <p class="text-slate-400 text-sm">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant</p>
+          <p class="text-slate-400 text-sm">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant <span class="text-xs text-slate-500">(v2)</span></p>
         </div>
       </div>
 
@@ -178,21 +178,10 @@
   </div>
 
   <script>
-    // CONFIGURATION SUPABASE
-    const SUPABASE_URL = 'https://nigvtiioljogywbkeebj.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_Naiu17NgtjJaXMeqZF-Ifg_odjGrrUa';
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    let joueursList = [];
-    let toutesParties = [];
-    let championsHistoriques = [];
-    let isAdmin = false;
-    let chartInstance = null;
-
     function afficherErreur(message) {
       const banner = document.getElementById('debug-erreur');
       if (!banner) return;
-      banner.textContent = '⚠️ ' + message;
+      banner.textContent += (banner.textContent ? '\n' : '') + '⚠️ ' + message;
       banner.classList.remove('hidden');
     }
 
@@ -202,6 +191,29 @@
       banner.textContent = '';
       banner.classList.add('hidden');
     }
+
+    window.onerror = function(msg, url, line) {
+      afficherErreur(`Erreur JS (ligne ${line}) : ${msg}`);
+    };
+
+    window.addEventListener('unhandledrejection', function(event) {
+      afficherErreur('Promesse rejetée : ' + (event.reason?.message || event.reason));
+    });
+
+    if (!window.supabase) {
+      afficherErreur('La librairie Supabase JS ne s’est pas chargée (vérifier le réseau/CDN).');
+    }
+
+    // CONFIGURATION SUPABASE
+    const SUPABASE_URL = 'https://nigvtiioljogywbkeebj.supabase.co';
+    const SUPABASE_KEY = 'COLLE_TA_CLE_ANON_EYJ_ICI';
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let joueursList = [];
+    let toutesParties = [];
+    let championsHistoriques = [];
+    let isAdmin = false;
+    let chartInstance = null;
 
     function calculerPoints(position, mode = '321') {
       if (mode === '1pt') return position === 1 ? 1 : 0;
