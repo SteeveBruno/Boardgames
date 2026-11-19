@@ -30,7 +30,7 @@
 
       <div>
         <h1 class="text-2xl sm:text-4xl font-bold text-amber-400 tracking-tight">Classement & Statistiques</h1>
-        <p class="text-slate-400 text-sm mt-1">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant • 5 réguliers <span class="text-xs text-slate-500">(v14)</span></p>
+        <p class="text-slate-400 text-sm mt-1">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant • 5 réguliers <span class="text-xs text-slate-500">(v16)</span></p>
       </div>
 
       <div class="flex flex-wrap justify-center items-center gap-3 pt-1">
@@ -98,7 +98,7 @@
         </div>
 
         <div>
-          <label class="block text-xs text-slate-400 mb-2">Position et score par joueur (« Absent » si non participant)</label>
+          <label class="block text-xs text-slate-400 mb-2">Position ajustée automatiquement selon le score (modifiable manuellement ; « Absent » si non participant)</label>
           <div id="edit-grille-joueurs" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             <!-- Généré en JS -->
           </div>
@@ -142,7 +142,7 @@
         </div>
 
         <div>
-          <label class="block text-xs text-slate-400 mb-2">Résultats par joueur (position finale et score optionnel ; laisser sur « Absent » si non participant)</label>
+          <label class="block text-xs text-slate-400 mb-2">Résultats par joueur (présent par défaut ; choisir « Absent » si un joueur n'a pas joué)</label>
           <div id="grille-joueurs" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             <!-- Généré en JS -->
           </div>
@@ -346,9 +346,10 @@
       return 0;
     }
 
-    function construireCarteJoueurForm(j, prefix = '') {
+    function construireCarteJoueurForm(j, prefix = '', defautPosition = '') {
       const posId = `${prefix}pos-${j.id}`;
       const scoreId = `${prefix}score-${j.id}`;
+      const sel = (val) => (String(defautPosition) === String(val) ? 'selected' : '');
       return `
         <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2 min-w-0">
@@ -357,12 +358,12 @@
           </div>
           <div class="flex items-center gap-2 shrink-0">
             <select id="${posId}" data-joueur-id="${j.id}" class="select-pos bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs">
-              <option value="">Absent</option>
-              <option value="1">1er</option>
-              <option value="2">2e</option>
-              <option value="3">3e</option>
-              <option value="4">4e</option>
-              <option value="5">5e</option>
+              <option value="" ${sel('')}>Absent</option>
+              <option value="1" ${sel('1')}>1er</option>
+              <option value="2" ${sel('2')}>2e</option>
+              <option value="3" ${sel('3')}>3e</option>
+              <option value="4" ${sel('4')}>4e</option>
+              <option value="5" ${sel('5')}>5e</option>
             </select>
             <input
               id="${scoreId}"
@@ -430,6 +431,56 @@
       });
     }
 
+    // Ajuste automatiquement la position des joueurs ayant un score selon l'ordre décroissant des scores
+    function ajusterPositionsSelonScores(containerEl, mode) {
+      const inputsScore = [...containerEl.querySelectorAll('.input-score')];
+      const avecScore = [];
+
+      inputsScore.forEach(inp => {
+        if (inp.value !== '' && !Number.isNaN(Number(inp.value))) {
+          avecScore.push({
+            joueurId: inp.dataset.joueurId,
+            score: Number(inp.value)
+          });
+        }
+      });
+
+      if (avecScore.length === 0) {
+        rafraichirApercuDansConteneur(containerEl, mode);
+        return;
+      }
+
+      avecScore.sort((a, b) => b.score - a.score);
+
+      let rangActuel = 1;
+      avecScore.forEach((item, index) => {
+        if (index > 0 && item.score < avecScore[index - 1].score) {
+          rangActuel = index + 1;
+        }
+        const posClamped = Math.min(5, rangActuel);
+        const sel = containerEl.querySelector(`.select-pos[data-joueur-id="${item.joueurId}"]`);
+        if (sel) {
+          sel.value = String(posClamped);
+        }
+      });
+
+      rafraichirApercuDansConteneur(containerEl, mode);
+    }
+
+    function attacherListenersFormulaire(containerEl, getMode) {
+      containerEl.querySelectorAll('.select-pos').forEach(select => {
+        select.addEventListener('change', () => {
+          rafraichirApercuDansConteneur(containerEl, getMode());
+        });
+      });
+
+      containerEl.querySelectorAll('.input-score').forEach(inp => {
+        inp.addEventListener('input', () => {
+          ajusterPositionsSelonScores(containerEl, getMode());
+        });
+      });
+    }
+
     document.getElementById('mode-points').addEventListener('change', () => {
       rafraichirApercuDansConteneur(document.getElementById('grille-joueurs'), document.getElementById('mode-points').value);
     });
@@ -453,20 +504,13 @@
       joueursReguliersIds = new Set(joueursList.map(j => j.id));
 
       const grille = document.getElementById('grille-joueurs');
-      grille.innerHTML = joueursList.map(j => construireCarteJoueurForm(j, '')).join('');
-      grille.querySelectorAll('.select-pos').forEach(select => {
-        select.addEventListener('change', () => {
-          rafraichirApercuDansConteneur(grille, document.getElementById('mode-points').value);
-        });
-      });
+      grille.innerHTML = joueursList.map(j => construireCarteJoueurForm(j, '', '1')).join('');
+      attacherListenersFormulaire(grille, () => document.getElementById('mode-points').value);
+      rafraichirApercuDansConteneur(grille, document.getElementById('mode-points').value);
 
       const editGrille = document.getElementById('edit-grille-joueurs');
-      editGrille.innerHTML = joueursList.map(j => construireCarteJoueurForm(j, 'edit-')).join('');
-      editGrille.querySelectorAll('.select-pos').forEach(select => {
-        select.addEventListener('change', () => {
-          rafraichirApercuDansConteneur(editGrille, document.getElementById('edit-mode-points').value);
-        });
-      });
+      editGrille.innerHTML = joueursList.map(j => construireCarteJoueurForm(j, 'edit-', '')).join('');
+      attacherListenersFormulaire(editGrille, () => document.getElementById('edit-mode-points').value);
 
       const selectJoueurStats = document.getElementById('select-joueur-stats');
       const valeurActuelle = selectJoueurStats.value;
@@ -971,9 +1015,9 @@
       document.getElementById('duree-partie').value = '';
       document.getElementById('lieu-partie').value = '';
       grille.querySelectorAll('.select-pos').forEach(s => {
-        s.value = '';
-        s.parentElement.querySelector('.pts-apercu').textContent = '—';
+        s.value = '1';
       });
+      rafraichirApercuDansConteneur(grille, '321');
       grille.querySelectorAll('.input-score').forEach(inp => {
         inp.value = '';
       });
