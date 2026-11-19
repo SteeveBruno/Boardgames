@@ -30,7 +30,7 @@
 
       <div class="w-full px-1">
         <h1 class="text-2xl sm:text-4xl font-bold text-amber-400 tracking-tight">Classement & Statistiques</h1>
-        <p class="text-slate-400 text-sm mt-1">Barème : 3 / 2 / 1 pt • Jeux courts : 1 pt • 5 réguliers <span class="text-xs text-slate-500">(v27)</span></p>
+        <p class="text-slate-400 text-sm mt-1">Barème : 3 / 2 / 1 pt • Jeux courts : 1 pt • 5 réguliers <span class="text-xs text-slate-500">(v28)</span></p>
       </div>
 
       <div class="flex flex-wrap justify-center items-center gap-2.5 pt-1 w-full">
@@ -42,6 +42,9 @@
           <option value="2022">Saison 2022</option>
           <option value="all">Toutes saisons (2022–2026)</option>
         </select>
+        <button type="button" id="btn-resume-saison" class="bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 px-3.5 py-2 rounded-lg text-sm sm:text-base font-semibold transition">
+          📝 Résumé
+        </button>
         <button id="btn-auth" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3.5 py-2 rounded-lg text-sm sm:text-base">
           Connexion Admin
         </button>
@@ -78,6 +81,25 @@
         <input type="password" id="login-password" placeholder="Mot de passe" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-base sm:text-sm">
         <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2.5 rounded text-base sm:text-sm">Se connecter</button>
       </form>
+    </div>
+
+    <!-- Fenêtre modale de résumé sportif de saison -->
+    <div id="modal-resume" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="modal-resume-titre">
+      <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
+          <div class="min-w-0">
+            <div id="modal-resume-soustitre" class="text-xs sm:text-sm text-amber-400/90 font-semibold uppercase tracking-wide"></div>
+            <h3 id="modal-resume-titre" class="text-lg sm:text-2xl font-bold text-slate-100 mt-0.5 break-words"></h3>
+          </div>
+          <button type="button" id="btn-fermer-modal-resume" class="shrink-0 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-semibold">
+            ✕ Fermer
+          </button>
+        </div>
+
+        <div id="modal-resume-contenu" class="space-y-3.5 text-sm sm:text-base text-slate-200 leading-relaxed">
+          <!-- Rempli par JS -->
+        </div>
+      </div>
     </div>
 
     <!-- Fenêtre modale détaillée d'une partie -->
@@ -487,7 +509,7 @@
         const spanClass = btn.dataset.onglet === 'principal' ? 'col-span-2 ' : '';
         btn.className = actif
           ? `btn-onglet ${spanClass}px-3.5 py-2.5 rounded-xl text-sm font-semibold transition bg-amber-500 text-slate-900`
-          : `btn-onglet ${spanClass}px-3.5 py-2.5 rounded-xl text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700`;
+          : `btn-onglet ${spanClass}px-3 py-2.5 rounded-xl text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700`;
       });
 
       if (nomOnglet === 'principal') {
@@ -757,6 +779,170 @@
       return stats;
     }
 
+    // Chronique sportive factuelle basée sur l'évolution des points de la saison
+    function genererResumeSportif(saisonCible, partiesSaison) {
+      const chrono = [...partiesSaison].sort((a, b) => a.date_partie.localeCompare(b.date_partie) || a.id - b.id);
+      if (chrono.length === 0) {
+        return {
+          soustitre: `Saison ${saisonCible}`,
+          titre: 'Aucune donnée enregistrée',
+          html: `<p class="text-slate-400">Aucune partie régulière n'a encore été enregistrée pour la saison ${saisonCible}.</p>`
+        };
+      }
+
+      const cumuls = {};
+      joueursList.forEach(j => { cumuls[j.id] = 0; });
+
+      const evenementsPriseTete = [];
+      let meneurPrecedentId = null;
+
+      const jeuxCompteur = {};
+      const partiesParJoueur = {};
+      joueursList.forEach(j => { partiesParJoueur[j.id] = 0; });
+
+      chrono.forEach((p, idx) => {
+        jeuxCompteur[p.nom_jeu] = (jeuxCompteur[p.nom_jeu] || 0) + 1;
+        const resReg = resultatsReguliers(p);
+
+        resReg.forEach(r => {
+          if (cumuls[r.joueur_id] !== undefined) {
+            cumuls[r.joueur_id] += r.points;
+            partiesParJoueur[r.joueur_id] += 1;
+          }
+        });
+
+        const ordres = joueursList
+          .map(j => ({ id: j.id, nom: j.nom, pts: cumuls[j.id] || 0 }))
+          .sort((a, b) => b.pts - a.pts || a.nom.localeCompare(b.nom, 'fr'));
+
+        const leader = ordres[0];
+        const dauphin = ordres[1];
+        if (leader && leader.pts > 0) {
+          const ecart = dauphin ? leader.pts - dauphin.pts : leader.pts;
+          if (meneurPrecedentId === null) {
+            evenementsPriseTete.push(`dès la partie du ${p.date_partie} (${p.nom_jeu}), ${leader.nom} prend les commandes (${leader.pts} pt${leader.pts > 1 ? 's' : ''})`);
+            meneurPrecedentId = leader.id;
+          } else if (leader.id !== meneurPrecedentId && ecart > 0) {
+            evenementsPriseTete.push(`le ${p.date_partie} (${p.nom_jeu}), ${leader.nom} s'empare de la tête (${leader.pts} pts contre ${dauphin ? dauphin.pts : 0} pt${(dauphin?.pts || 0) > 1 ? 's' : ''})`);
+            meneurPrecedentId = leader.id;
+          }
+        }
+      });
+
+      const statsFinales = calculerStatsJoueurs(chrono);
+      const classementFinal = Object.values(statsFinales)
+        .sort((a, b) => b.points - a.points || b.p1 - a.p1 || a.nom.localeCompare(b.nom, 'fr'));
+
+      const champion = classementFinal[0];
+      const dauphinFinal = classementFinal[1];
+      const troisiemeFinal = classementFinal[2];
+
+      const ecartFinal = champion && dauphinFinal ? champion.points - dauphinFinal.points : 0;
+      const jeuVedette = Object.entries(jeuxCompteur).sort((a, b) => b[1] - a[1])[0];
+
+      const plusEfficace = [...classementFinal]
+        .filter(j => j.parties > 0)
+        .sort((a, b) => (b.points / b.parties) - (a.points / a.parties) || b.points - a.points)[0];
+
+      const paragraphes = [];
+
+      // 1. Ouverture & scénario de course au sommet
+      const premiereDate = chrono[0].date_partie;
+      const derniereDate = chrono[chrono.length - 1].date_partie;
+      let intro = `Sur les <strong>${chrono.length} partie${chrono.length > 1 ? 's' : ''}</strong> disputées entre le <strong>${premiereDate}</strong> et le <strong>${derniereDate}</strong>, `;
+
+      if (evenementsPriseTete.length > 1) {
+        const extraits = evenementsPriseTete.slice(-3).join(' ; ');
+        intro += `le peloton a connu un véritable chassé-croisé au sommet : ${extraits}.`;
+      } else if (evenementsPriseTete.length === 1) {
+        intro += `${evenementsPriseTete[0]}, imprimant rapidement le rythme de la saison.`;
+      } else {
+        intro += `les points se sont répartis de façon serrée sans qu'un meneur net ne se détache encore.`;
+      }
+      paragraphes.push(intro);
+
+      // 2. Verdict final & podium
+      if (champion && champion.points > 0) {
+        const ecartTexte = ecartFinal === 0
+          ? `à égalité parfaite de points avec <strong>${dauphinFinal.nom}</strong> (${champion.points} pts), départagé par le nombre de 1ères places (${champion.p1} 🥇)`
+          : `avec une avance de <strong>${ecartFinal} point${ecartFinal > 1 ? 's' : ''}</strong> sur <strong>${dauphinFinal.nom}</strong> (${dauphinFinal.points} pts)`;
+
+        let podiumTxt = `Au fil d'arrivée, <strong>${champion.nom}</strong> termine en tête avec <strong>${champion.points} points</strong> (${champion.p1} 🥇, ${champion.p2} 🥈, ${champion.p3} 🥉 en ${champion.parties} partie${champion.parties > 1 ? 's' : ''}), ${ecartTexte}.`;
+        if (troisiemeFinal) {
+          podiumTxt += ` <strong>${troisiemeFinal.nom}</strong> complète le podium provisoire ou final avec <strong>${troisiemeFinal.points} points</strong> (${troisiemeFinal.p1} 🥇).`;
+        }
+        paragraphes.push(podiumTxt);
+      }
+
+      // 3. Rendement & jeu le plus présent sur la table
+      const details = [];
+      if (plusEfficace) {
+        const moy = (plusEfficace.points / plusEfficace.parties).toFixed(2);
+        details.push(`Côté rendement, <strong>${plusEfficace.nom}</strong> affiche la meilleure moyenne avec <strong>${moy} pt/partie</strong> (${plusEfficace.points} pts en ${plusEfficace.parties} partie${plusEfficace.parties > 1 ? 's' : ''})`);
+      }
+      if (jeuVedette) {
+        details.push(`le titre le plus souvent sorti sur la table est <strong>${jeuVedette[0]}</strong> avec <strong>${jeuVedette[1]} partie${jeuVedette[1] > 1 ? 's' : ''}</strong>`);
+      }
+      if (details.length > 0) {
+        paragraphes.push(details.join(' tandis que ') + '.');
+      }
+
+      const miniClassementHtml = `
+        <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 space-y-1.5">
+          <div class="text-xs uppercase text-slate-400 font-semibold">État des forces (${saisonCible})</div>
+          ${classementFinal.map((j, i) => `
+            <div class="flex items-center justify-between text-xs sm:text-sm py-1 border-b border-slate-700/50 last:border-b-0">
+              <span class="inline-flex items-center gap-2 font-semibold">
+                <span class="text-slate-400">#${i + 1}</span>
+                ${meepleHtml(j.couleur, 'w-4 h-4')}
+                <span>${j.nom}</span>
+              </span>
+              <span class="text-slate-300">
+                <strong class="text-amber-400">${j.points} pts</strong> • ${j.p1}🥇 • ${j.parties}p.
+              </span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      return {
+        soustitre: `Chronique de saison • ${saisonCible}`,
+        titre: `Bilan sportif — Saison ${saisonCible}`,
+        html: paragraphes.map(txt => `<p>${txt}</p>`).join('') + miniClassementHtml
+      };
+    }
+
+    function ouvrirResumeSaison() {
+      const filtreSaison = document.getElementById('filtre-saison').value;
+      let saisonCible = filtreSaison;
+      let partiesSaison = [];
+
+      if (filtreSaison === 'all') {
+        const saisonsDispo = [...new Set(toutesParties.map(p => p.saison))].sort((a, b) => b - a);
+        saisonCible = saisonsDispo[0] || new Date().getFullYear();
+        partiesSaison = toutesParties.filter(p => p.saison === saisonCible);
+      } else {
+        saisonCible = parseInt(filtreSaison, 10);
+        partiesSaison = toutesParties.filter(p => p.saison === saisonCible);
+      }
+
+      const resume = genererResumeSportif(saisonCible, partiesSaison);
+      document.getElementById('modal-resume-soustitre').textContent = resume.soustitre;
+      document.getElementById('modal-resume-titre').textContent = resume.titre;
+      document.getElementById('modal-resume-contenu').innerHTML = resume.html;
+      document.getElementById('modal-resume').classList.remove('hidden');
+    }
+
+    function fermerModalResume() {
+      document.getElementById('modal-resume').classList.add('hidden');
+    }
+
+    document.getElementById('btn-resume-saison').addEventListener('click', ouvrirResumeSaison);
+    document.getElementById('btn-fermer-modal-resume').addEventListener('click', fermerModalResume);
+    document.getElementById('modal-resume').addEventListener('click', (e) => {
+      if (e.target.id === 'modal-resume') fermerModalResume();
+    });
+
     function rendreClassement(parties) {
       const stats = calculerStatsJoueurs(parties);
       const classement = Object.values(stats)
@@ -809,7 +995,6 @@
       }).join('');
     }
 
-    // Options communes du graphique avec tri du classement décroissant au clic / survol
     const optionsTooltipClassement = {
       itemSort: (a, b) => (b.parsed?.y ?? 0) - (a.parsed?.y ?? 0) || a.dataset.label.localeCompare(b.dataset.label, 'fr'),
       callbacks: {
@@ -1148,7 +1333,10 @@
       if (e.target.id === 'modal-partie') fermerModalPartie();
     });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') fermerModalPartie();
+      if (e.key === 'Escape') {
+        fermerModalPartie();
+        fermerModalResume();
+      }
     });
 
     function rendreHistorique(parties) {
