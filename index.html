@@ -30,7 +30,7 @@
 
       <div class="w-full px-1">
         <h1 class="text-2xl sm:text-4xl font-bold text-amber-400 tracking-tight">Classement & Statistiques</h1>
-        <p class="text-slate-400 text-sm mt-1">Barème : 3 / 2 / 1 pt • Jeux courts : 1 pt • 5 réguliers <span class="text-xs text-slate-500">(v28)</span></p>
+        <p class="text-slate-400 text-sm mt-1">Barème : 3 / 2 / 1 pt • Jeux courts : 1 pt • 5 réguliers <span class="text-xs text-slate-500">(v29)</span></p>
       </div>
 
       <div class="flex flex-wrap justify-center items-center gap-2.5 pt-1 w-full">
@@ -42,7 +42,7 @@
           <option value="2022">Saison 2022</option>
           <option value="all">Toutes saisons (2022–2026)</option>
         </select>
-        <button type="button" id="btn-resume-saison" class="bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 px-3.5 py-2 rounded-lg text-sm sm:text-base font-semibold transition">
+        <button type="button" id="btn-resume-saison" class="hidden bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 px-3.5 py-2 rounded-lg text-sm sm:text-base font-semibold transition">
           📝 Résumé
         </button>
         <button id="btn-auth" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3.5 py-2 rounded-lg text-sm sm:text-base">
@@ -497,6 +497,29 @@
     let chartInstance = null;
     let ongletActif = 'principal';
 
+    function estSaisonTerminee(saisonNum) {
+      const anneeCourante = new Date().getFullYear();
+      return !Number.isNaN(saisonNum) && saisonNum < anneeCourante;
+    }
+
+    function mettreAJourVisibiliteResume() {
+      const btnResume = document.getElementById('btn-resume-saison');
+      if (!btnResume) return;
+      const filtreSaison = document.getElementById('filtre-saison').value;
+      if (filtreSaison === 'all') {
+        btnResume.classList.add('hidden');
+        fermerModalResume();
+        return;
+      }
+      const saisonNum = parseInt(filtreSaison, 10);
+      if (estSaisonTerminee(saisonNum)) {
+        btnResume.classList.remove('hidden');
+      } else {
+        btnResume.classList.add('hidden');
+        fermerModalResume();
+      }
+    }
+
     function changerOnglet(nomOnglet) {
       ongletActif = nomOnglet;
       ['principal', 'joueur', 'jeu', 'palmares', 'cimetiere'].forEach(cle => {
@@ -712,6 +735,7 @@
     }
 
     async function chargerDonnees() {
+      mettreAJourVisibiliteResume();
       const filtreSaison = document.getElementById('filtre-saison').value;
 
       const { data: partiesAll, error: errParties } = await db
@@ -779,14 +803,14 @@
       return stats;
     }
 
-    // Chronique sportive factuelle basée sur l'évolution des points de la saison
+    // Chronique sportive factuelle basée sur l'évolution des points d'une saison terminée
     function genererResumeSportif(saisonCible, partiesSaison) {
       const chrono = [...partiesSaison].sort((a, b) => a.date_partie.localeCompare(b.date_partie) || a.id - b.id);
       if (chrono.length === 0) {
         return {
           soustitre: `Saison ${saisonCible}`,
           titre: 'Aucune donnée enregistrée',
-          html: `<p class="text-slate-400">Aucune partie régulière n'a encore été enregistrée pour la saison ${saisonCible}.</p>`
+          html: `<p class="text-slate-400">Aucune partie régulière n'a été enregistrée pour la saison ${saisonCible}.</p>`
         };
       }
 
@@ -797,17 +821,14 @@
       let meneurPrecedentId = null;
 
       const jeuxCompteur = {};
-      const partiesParJoueur = {};
-      joueursList.forEach(j => { partiesParJoueur[j.id] = 0; });
 
-      chrono.forEach((p, idx) => {
+      chrono.forEach((p) => {
         jeuxCompteur[p.nom_jeu] = (jeuxCompteur[p.nom_jeu] || 0) + 1;
         const resReg = resultatsReguliers(p);
 
         resReg.forEach(r => {
           if (cumuls[r.joueur_id] !== undefined) {
             cumuls[r.joueur_id] += r.points;
-            partiesParJoueur[r.joueur_id] += 1;
           }
         });
 
@@ -846,7 +867,6 @@
 
       const paragraphes = [];
 
-      // 1. Ouverture & scénario de course au sommet
       const premiereDate = chrono[0].date_partie;
       const derniereDate = chrono[chrono.length - 1].date_partie;
       let intro = `Sur les <strong>${chrono.length} partie${chrono.length > 1 ? 's' : ''}</strong> disputées entre le <strong>${premiereDate}</strong> et le <strong>${derniereDate}</strong>, `;
@@ -857,24 +877,22 @@
       } else if (evenementsPriseTete.length === 1) {
         intro += `${evenementsPriseTete[0]}, imprimant rapidement le rythme de la saison.`;
       } else {
-        intro += `les points se sont répartis de façon serrée sans qu'un meneur net ne se détache encore.`;
+        intro += `les points se sont répartis de façon serrée sans qu'un meneur net ne se détache.`;
       }
       paragraphes.push(intro);
 
-      // 2. Verdict final & podium
       if (champion && champion.points > 0) {
         const ecartTexte = ecartFinal === 0
           ? `à égalité parfaite de points avec <strong>${dauphinFinal.nom}</strong> (${champion.points} pts), départagé par le nombre de 1ères places (${champion.p1} 🥇)`
           : `avec une avance de <strong>${ecartFinal} point${ecartFinal > 1 ? 's' : ''}</strong> sur <strong>${dauphinFinal.nom}</strong> (${dauphinFinal.points} pts)`;
 
-        let podiumTxt = `Au fil d'arrivée, <strong>${champion.nom}</strong> termine en tête avec <strong>${champion.points} points</strong> (${champion.p1} 🥇, ${champion.p2} 🥈, ${champion.p3} 🥉 en ${champion.parties} partie${champion.parties > 1 ? 's' : ''}), ${ecartTexte}.`;
+        let podiumTxt = `Au terme de la saison, <strong>${champion.nom}</strong> termine en tête avec <strong>${champion.points} points</strong> (${champion.p1} 🥇, ${champion.p2} 🥈, ${champion.p3} 🥉 en ${champion.parties} partie${champion.parties > 1 ? 's' : ''}), ${ecartTexte}.`;
         if (troisiemeFinal) {
-          podiumTxt += ` <strong>${troisiemeFinal.nom}</strong> complète le podium provisoire ou final avec <strong>${troisiemeFinal.points} points</strong> (${troisiemeFinal.p1} 🥇).`;
+          podiumTxt += ` <strong>${troisiemeFinal.nom}</strong> complète le podium avec <strong>${troisiemeFinal.points} points</strong> (${troisiemeFinal.p1} 🥇).`;
         }
         paragraphes.push(podiumTxt);
       }
 
-      // 3. Rendement & jeu le plus présent sur la table
       const details = [];
       if (plusEfficace) {
         const moy = (plusEfficace.points / plusEfficace.parties).toFixed(2);
@@ -889,7 +907,7 @@
 
       const miniClassementHtml = `
         <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 space-y-1.5">
-          <div class="text-xs uppercase text-slate-400 font-semibold">État des forces (${saisonCible})</div>
+          <div class="text-xs uppercase text-slate-400 font-semibold">Classement final (${saisonCible})</div>
           ${classementFinal.map((j, i) => `
             <div class="flex items-center justify-between text-xs sm:text-sm py-1 border-b border-slate-700/50 last:border-b-0">
               <span class="inline-flex items-center gap-2 font-semibold">
@@ -914,18 +932,12 @@
 
     function ouvrirResumeSaison() {
       const filtreSaison = document.getElementById('filtre-saison').value;
-      let saisonCible = filtreSaison;
-      let partiesSaison = [];
+      if (filtreSaison === 'all') return;
 
-      if (filtreSaison === 'all') {
-        const saisonsDispo = [...new Set(toutesParties.map(p => p.saison))].sort((a, b) => b - a);
-        saisonCible = saisonsDispo[0] || new Date().getFullYear();
-        partiesSaison = toutesParties.filter(p => p.saison === saisonCible);
-      } else {
-        saisonCible = parseInt(filtreSaison, 10);
-        partiesSaison = toutesParties.filter(p => p.saison === saisonCible);
-      }
+      const saisonCible = parseInt(filtreSaison, 10);
+      if (!estSaisonTerminee(saisonCible)) return;
 
+      const partiesSaison = toutesParties.filter(p => p.saison === saisonCible);
       const resume = genererResumeSportif(saisonCible, partiesSaison);
       document.getElementById('modal-resume-soustitre').textContent = resume.soustitre;
       document.getElementById('modal-resume-titre').textContent = resume.titre;
@@ -1595,7 +1607,10 @@
       await chargerDonnees();
     };
 
-    document.getElementById('filtre-saison').addEventListener('change', chargerDonnees);
+    document.getElementById('filtre-saison').addEventListener('change', () => {
+      mettreAJourVisibiliteResume();
+      chargerDonnees();
+    });
     document.getElementById('select-joueur-stats').addEventListener('change', () => {
       const filtreSaison = document.getElementById('filtre-saison').value;
       const partiesFiltrees = filtreSaison === 'all'
@@ -1604,6 +1619,7 @@
       rendreStatsJoueur(partiesFiltrees);
     });
 
+    mettreAJourVisibiliteResume();
     chargerJoueurs().then(verifierSession);
   </script>
 </body>
