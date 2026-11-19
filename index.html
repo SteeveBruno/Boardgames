@@ -11,7 +11,7 @@
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
 
   <div class="max-w-6xl mx-auto p-4 sm:p-6">
-    <!-- Bandeau d'erreur global -->
+    <!-- Bandeau d'erreur / info global -->
     <div id="debug-erreur" class="hidden bg-rose-950/90 border border-rose-500 text-rose-200 p-3.5 rounded-xl mb-6 text-sm whitespace-pre-wrap"></div>
 
     <!-- En-tête centré avec grand logo au-dessus du titre et des menus -->
@@ -30,7 +30,7 @@
 
       <div>
         <h1 class="text-2xl sm:text-4xl font-bold text-amber-400 tracking-tight">Classement & Statistiques</h1>
-        <p class="text-slate-400 text-sm mt-1">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant • 5 réguliers <span class="text-xs text-slate-500">(v9)</span></p>
+        <p class="text-slate-400 text-sm mt-1">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant • 5 réguliers <span class="text-xs text-slate-500">(v13)</span></p>
       </div>
 
       <div class="flex flex-wrap justify-center items-center gap-3 pt-1">
@@ -48,6 +48,9 @@
       </div>
     </header>
 
+    <!-- Liste des durées par tranches de 5 minutes -->
+    <datalist id="liste-durees-5min"></datalist>
+
     <!-- Modale de connexion Admin -->
     <div id="login-box" class="hidden bg-slate-800 border border-slate-700 p-4 rounded-lg mb-6 max-w-md mx-auto">
       <h2 class="font-bold mb-3 text-amber-400">Connexion Administrateur</h2>
@@ -58,11 +61,60 @@
       </form>
     </div>
 
-    <!-- Formulaire d'ajout de partie (Visible uniquement si connecté) -->
+    <!-- Panneau d'édition d'une partie existante ou future (Visible uniquement si connecté et en cours d'édition) -->
+    <section id="edit-panel" class="hidden bg-slate-800/95 border border-sky-400/50 p-5 rounded-xl mb-8 shadow-lg">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-bold text-sky-400">✏️ Modifier la partie</h2>
+        <button type="button" id="btn-annuler-edit" class="text-xs text-slate-400 hover:text-slate-200 border border-slate-600 px-2.5 py-1 rounded">
+          Annuler
+        </button>
+      </div>
+      <form id="form-edit-partie" class="space-y-4">
+        <input type="hidden" id="edit-partie-id">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Date (passée ou future)</label>
+            <input type="date" id="edit-date-partie" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Nom du jeu</label>
+            <input type="text" id="edit-nom-jeu" list="liste-jeux" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Type de pointage</label>
+            <select id="edit-mode-points" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+              <option value="321">Standard (3 / 2 / 1 pt)</option>
+              <option value="1pt">Partie courte (1 pt au gagnant)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Durée (min, pas de 5)</label>
+            <input type="number" id="edit-duree-partie" list="liste-durees-5min" min="5" max="600" step="5" placeholder="Ex: 90" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Lieu</label>
+            <input type="text" id="edit-lieu-partie" placeholder="Ex: Chez Steeve, Charlesbourg..." class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-400 mb-2">Position et score par joueur (« Absent » si non participant)</label>
+          <div id="edit-grille-joueurs" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <!-- Généré en JS -->
+          </div>
+        </div>
+
+        <button type="submit" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-5 py-2 rounded text-sm">
+          Sauvegarder les modifications
+        </button>
+      </form>
+    </section>
+
+    <!-- Formulaire d'ajout de partie / partie future (Visible uniquement si connecté) -->
     <section id="admin-panel" class="hidden bg-slate-800/80 border border-amber-500/40 p-5 rounded-xl mb-8">
-      <h2 class="text-lg font-bold text-amber-400 mb-4">➕ Ajouter une partie</h2>
+      <h2 class="text-lg font-bold text-amber-400 mb-4">➕ Ajouter une partie (ou planifier une partie future)</h2>
       <form id="form-partie" class="space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
           <div>
             <label class="block text-xs text-slate-400 mb-1">Date de la partie</label>
             <input type="date" id="date-partie" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
@@ -79,10 +131,18 @@
               <option value="1pt">Partie courte (1 pt au gagnant)</option>
             </select>
           </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Durée (min, pas de 5)</label>
+            <input type="number" id="duree-partie" list="liste-durees-5min" min="5" max="600" step="5" placeholder="Ex: 75" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Lieu</label>
+            <input type="text" id="lieu-partie" placeholder="Ex: Chez Louis, Québec..." class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+          </div>
         </div>
 
         <div>
-          <label class="block text-xs text-slate-400 mb-2">Résultats par joueur (choisir la position finale ; laisser sur « Absent » si le joueur n'a pas joué)</label>
+          <label class="block text-xs text-slate-400 mb-2">Résultats par joueur (position finale et score optionnel ; laisser sur « Absent » si non participant)</label>
           <div id="grille-joueurs" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             <!-- Généré en JS -->
           </div>
@@ -169,9 +229,9 @@
       </div>
     </section>
 
-    <!-- Historique des soirées -->
+    <!-- Historique des soirées / parties futures -->
     <section>
-      <h2 class="text-xl font-bold mb-3">📅 Historique des parties</h2>
+      <h2 class="text-xl font-bold mb-3">📅 Historique & parties à venir</h2>
       <div id="liste-parties" class="space-y-3">
         <!-- Rempli par JS -->
       </div>
@@ -224,6 +284,54 @@
       return JOUEURS_EXACTS.includes(n) || n.includes('eric');
     }
 
+    // Durée à 5 minutes près
+    function normaliserDuree5Min(valeur) {
+      if (valeur === null || valeur === undefined || String(valeur).trim() === '') return null;
+      const num = parseFloat(String(valeur).replace(',', '.'));
+      if (Number.isNaN(num) || num <= 0) return null;
+      const arrondi = Math.max(5, Math.round(num / 5) * 5);
+      return String(arrondi);
+    }
+
+    function formaterDureeAffichage(duree) {
+      if (!duree) return null;
+      const str = String(duree).trim();
+      if (/^\d+$/.test(str)) {
+        const mins = parseInt(str, 10);
+        if (mins >= 60) {
+          const h = Math.floor(mins / 60);
+          const m = mins % 60;
+          return `${mins} min (${h}h${m > 0 ? String(m).padStart(2, '0') : '00'})`;
+        }
+        return `${mins} min`;
+      }
+      return str;
+    }
+
+    function initialiserOptionsDuree5Min() {
+      const dl = document.getElementById('liste-durees-5min');
+      if (!dl) return;
+      const opts = [];
+      for (let m = 5; m <= 300; m += 5) {
+        const h = Math.floor(m / 60);
+        const rem = m % 60;
+        const label = m >= 60 ? `${m} min (${h}h${String(rem).padStart(2, '0')})` : `${m} min`;
+        opts.push(`<option value="${m}" label="${label}">`);
+      }
+      dl.innerHTML = opts.join('');
+
+      ['duree-partie', 'edit-duree-partie'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('blur', () => {
+          const norm = normaliserDuree5Min(el.value);
+          el.value = norm || '';
+        });
+      });
+    }
+
+    initialiserOptionsDuree5Min();
+
     let joueursList = [];
     let joueursReguliersIds = new Set();
     let toutesParties = [];
@@ -239,6 +347,39 @@
       return 0;
     }
 
+    function construireCarteJoueurForm(j, prefix = '') {
+      const posId = `${prefix}pos-${j.id}`;
+      const scoreId = `${prefix}score-${j.id}`;
+      return `
+        <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="w-3 h-3 rounded-full shrink-0" style="background:${j.couleur}"></span>
+            <span class="font-semibold text-sm truncate">${j.nom}</span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <select id="${posId}" data-joueur-id="${j.id}" class="select-pos bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs">
+              <option value="">Absent</option>
+              <option value="1">1er</option>
+              <option value="2">2e</option>
+              <option value="3">3e</option>
+              <option value="4">4e</option>
+              <option value="5">5e</option>
+            </select>
+            <input
+              id="${scoreId}"
+              data-joueur-id="${j.id}"
+              type="number"
+              step="any"
+              placeholder="Score"
+              aria-label="Score de ${j.nom}"
+              class="input-score w-20 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-right"
+            >
+            <span class="pts-apercu text-xs font-bold text-amber-400 w-11 text-right">—</span>
+          </div>
+        </div>
+      `;
+    }
+
     document.getElementById('date-partie').valueAsDate = new Date();
 
     async function verifierSession() {
@@ -249,6 +390,9 @@
         }
         isAdmin = !!session;
         document.getElementById('admin-panel').classList.toggle('hidden', !isAdmin);
+        if (!isAdmin) {
+          document.getElementById('edit-panel').classList.add('hidden');
+        }
         document.getElementById('login-box').classList.add('hidden');
         document.getElementById('btn-auth').textContent = isAdmin ? 'Déconnexion' : 'Connexion Admin';
         await chargerDonnees();
@@ -275,9 +419,8 @@
       else await verifierSession();
     });
 
-    function rafraichirApercuPoints() {
-      const mode = document.getElementById('mode-points').value;
-      document.querySelectorAll('.select-pos').forEach(select => {
+    function rafraichirApercuDansConteneur(containerEl, mode) {
+      containerEl.querySelectorAll('.select-pos').forEach(select => {
         const apercu = select.parentElement.querySelector('.pts-apercu');
         if (select.value === '') {
           apercu.textContent = '—';
@@ -288,7 +431,13 @@
       });
     }
 
-    document.getElementById('mode-points').addEventListener('change', rafraichirApercuPoints);
+    document.getElementById('mode-points').addEventListener('change', () => {
+      rafraichirApercuDansConteneur(document.getElementById('grille-joueurs'), document.getElementById('mode-points').value);
+    });
+
+    document.getElementById('edit-mode-points').addEventListener('change', () => {
+      rafraichirApercuDansConteneur(document.getElementById('edit-grille-joueurs'), document.getElementById('edit-mode-points').value);
+    });
 
     async function chargerJoueurs() {
       const { data, error } = await db.from('joueurs').select('*').order('nom');
@@ -304,29 +453,25 @@
       joueursList = tousJoueurs.filter(j => estJoueurRegulier(j.nom));
       joueursReguliersIds = new Set(joueursList.map(j => j.id));
 
-      const grille = document.getElementById('grille-joueurs');
-      grille.innerHTML = joueursList.map(j => `
-        <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2 min-w-0">
-            <span class="w-3 h-3 rounded-full shrink-0" style="background:${j.couleur}"></span>
-            <span class="font-semibold text-sm truncate">${j.nom}</span>
-          </div>
-          <div class="flex items-center gap-2 shrink-0">
-            <select data-joueur-id="${j.id}" class="select-pos bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs">
-              <option value="">Absent</option>
-              <option value="1">1er</option>
-              <option value="2">2e</option>
-              <option value="3">3e</option>
-              <option value="4">4e</option>
-              <option value="5">5e</option>
-            </select>
-            <span class="pts-apercu text-xs font-bold text-amber-400 w-11 text-right">—</span>
-          </div>
-        </div>
-      `).join('');
+      if (joueursList.length < 5) {
+        const nomsDispos = tousJoueurs.map(j => `"${j.nom}" (id:${j.id})`).join(', ') || 'aucun';
+        afficherErreur(`Seulement ${joueursList.length} joueur(s) régulier(s) détecté(s) sur 5. Joueurs en base : ${nomsDispos}`);
+      }
 
+      const grille = document.getElementById('grille-joueurs');
+      grille.innerHTML = joueursList.map(j => construireCarteJoueurForm(j, '')).join('');
       grille.querySelectorAll('.select-pos').forEach(select => {
-        select.addEventListener('change', rafraichirApercuPoints);
+        select.addEventListener('change', () => {
+          rafraichirApercuDansConteneur(grille, document.getElementById('mode-points').value);
+        });
+      });
+
+      const editGrille = document.getElementById('edit-grille-joueurs');
+      editGrille.innerHTML = joueursList.map(j => construireCarteJoueurForm(j, 'edit-')).join('');
+      editGrille.querySelectorAll('.select-pos').forEach(select => {
+        select.addEventListener('change', () => {
+          rafraichirApercuDansConteneur(editGrille, document.getElementById('edit-mode-points').value);
+        });
       });
 
       const selectJoueurStats = document.getElementById('select-joueur-stats');
@@ -366,7 +511,6 @@
         return;
       }
 
-      effacerErreur();
       toutesParties = partiesAll || [];
       championsHistoriques = champHist || [];
 
@@ -688,29 +832,104 @@
       `).join('');
     }
 
+    function aujourdHuiIso() {
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
     function rendreHistorique(parties) {
+      const today = aujourdHuiIso();
       document.getElementById('liste-parties').innerHTML = parties.map(p => {
+        const isFuture = p.date_partie > today;
         const resTries = [...resultatsReguliers(p)].sort((a, b) => a.position - b.position || b.points - a.points);
         const badges = resTries.map(r => {
           const medaille = r.position === 1 ? '🥇' : r.position === 2 ? '🥈' : r.position === 3 ? '🥉' : `${r.position}e`;
           const nomJoueur = r.joueurs ? r.joueurs.nom : 'Joueur';
+          const scoreTxt = (r.score !== null && r.score !== undefined && r.score !== '') ? ` • score ${r.score}` : '';
           return `<span class="bg-slate-900 border border-slate-700 px-2.5 py-1 rounded text-xs">
-            ${medaille} <strong>${nomJoueur}</strong> <span class="text-amber-400">(${r.points} pt${r.points > 1 ? 's' : ''})</span>
+            ${medaille} <strong>${nomJoueur}</strong> <span class="text-amber-400">(${r.points} pt${r.points > 1 ? 's' : ''}${scoreTxt})</span>
           </span>`;
         }).join(' ');
 
-        const btnSuppr = isAdmin ? `<button onclick="supprimerPartie(${p.id})" class="text-red-400 hover:text-red-300 text-xs ml-2">Supprimer</button>` : '';
+        const dureeAffichee = formaterDureeAffichage(p.duree);
+        const metaInfos = [
+          isFuture ? '<span class="text-sky-400 font-semibold">À venir</span>' : null,
+          dureeAffichee ? `⏱️ ${dureeAffichee}` : null,
+          p.lieu ? `📍 ${p.lieu}` : null
+        ].filter(Boolean).join(' • ');
+
+        const actionsAdmin = isAdmin
+          ? `<button type="button" onclick="ouvrirEditionPartie(${p.id})" class="text-sky-400 hover:text-sky-300 text-xs ml-2">Modifier</button>
+             <button type="button" onclick="supprimerPartie(${p.id})" class="text-red-400 hover:text-red-300 text-xs ml-2">Supprimer</button>`
+          : '';
 
         return `
-          <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl flex flex-wrap justify-between items-center gap-3">
+          <div class="bg-slate-800 border ${isFuture ? 'border-sky-500/40' : 'border-slate-700'} p-4 rounded-xl flex flex-wrap justify-between items-center gap-3">
             <div>
-              <div class="text-xs text-slate-400">${p.date_partie} ${btnSuppr}</div>
-              <div class="font-bold text-base text-slate-100">${p.nom_jeu}</div>
+              <div class="text-xs text-slate-400 flex flex-wrap items-center gap-1.5">
+                <span>${p.date_partie}</span>
+                ${metaInfos ? `<span>• ${metaInfos}</span>` : ''}
+                ${actionsAdmin}
+              </div>
+              <div class="font-bold text-base text-slate-100 mt-0.5">${p.nom_jeu}</div>
             </div>
-            <div class="flex flex-wrap gap-2">${badges}</div>
+            <div class="flex flex-wrap gap-2">${badges || '<span class="text-xs text-slate-500 italic">Aucun résultat enregistré</span>'}</div>
           </div>
         `;
       }).join('');
+    }
+
+    function extraireParticipantsDepuisFormulaire(containerEl, mode) {
+      const selects = containerEl.querySelectorAll('.select-pos');
+      const participants = [];
+      selects.forEach(s => {
+        if (s.value !== '') {
+          const joueurId = parseInt(s.dataset.joueurId);
+          const pos = parseInt(s.value);
+          const scoreInput = containerEl.querySelector(`.input-score[data-joueur-id="${joueurId}"]`);
+          const scoreVal = scoreInput && scoreInput.value !== '' ? Number(scoreInput.value) : null;
+          participants.push({
+            joueur_id: joueurId,
+            position: pos,
+            points: calculerPoints(pos, mode),
+            score: scoreVal
+          });
+        }
+      });
+      return participants;
+    }
+
+    async function sauvegarderPartieAvecFallback(payloadPartie) {
+      const res = await db.from('parties').insert([payloadPartie]).select().single();
+      if (!res.error) return res;
+      if ((payloadPartie.duree !== undefined || payloadPartie.lieu !== undefined) && /column|duree|lieu/i.test(res.error.message)) {
+        const { duree, lieu, ...basePayload } = payloadPartie;
+        return await db.from('parties').insert([basePayload]).select().single();
+      }
+      return res;
+    }
+
+    async function mettreAJourPartieAvecFallback(id, payloadPartie) {
+      const res = await db.from('parties').update(payloadPartie).eq('id', id).select().single();
+      if (!res.error) return res;
+      if ((payloadPartie.duree !== undefined || payloadPartie.lieu !== undefined) && /column|duree|lieu/i.test(res.error.message)) {
+        const { duree, lieu, ...basePayload } = payloadPartie;
+        return await db.from('parties').update(basePayload).eq('id', id).select().single();
+      }
+      return res;
+    }
+
+    async function insererResultatsAvecFallback(lignes) {
+      const res = await db.from('resultats').insert(lignes);
+      if (!res.error) return res;
+      if (lignes.some(x => x.score !== undefined) && /column|score/i.test(res.error.message)) {
+        const sansScore = lignes.map(({ score, ...rest }) => rest);
+        return await db.from('resultats').insert(sansScore);
+      }
+      return res;
     }
 
     document.getElementById('form-partie').addEventListener('submit', async (e) => {
@@ -719,50 +938,141 @@
       const saison = parseInt(date_partie.split('-')[0]);
       const nom_jeu = document.getElementById('nom-jeu').value.trim();
       const mode = document.getElementById('mode-points').value;
+      const duree = normaliserDuree5Min(document.getElementById('duree-partie').value);
+      const lieu = document.getElementById('lieu-partie').value.trim() || null;
 
-      const selects = document.querySelectorAll('.select-pos');
-      const participants = [];
-      selects.forEach(s => {
-        if (s.value !== '') {
-          const pos = parseInt(s.value);
-          participants.push({
-            joueur_id: parseInt(s.dataset.joueurId),
-            position: pos,
-            points: calculerPoints(pos, mode)
-          });
-        }
-      });
+      const grille = document.getElementById('grille-joueurs');
+      const participants = extraireParticipantsDepuisFormulaire(grille, mode);
+      const estDateFuture = date_partie > aujourdHuiIso();
 
-      if (participants.length < 2) {
-        alert('Sélectionne au moins 2 joueurs présents.');
+      if (!estDateFuture && participants.length < 2) {
+        alert('Sélectionne au moins 2 joueurs présents (ou choisis une date future pour planifier la partie).');
         return;
       }
 
-      const { data: partieCreee, error: errPartie } = await db
-        .from('parties')
-        .insert([{ date_partie, saison, nom_jeu }])
-        .select()
-        .single();
+      const { data: partieCreee, error: errPartie } = await sauvegarderPartieAvecFallback({
+        date_partie,
+        saison,
+        nom_jeu,
+        duree,
+        lieu
+      });
 
       if (errPartie) {
         alert('Erreur : ' + errPartie.message);
         return;
       }
 
-      const lignesResultats = participants.map(p => ({ ...p, partie_id: partieCreee.id }));
-      const { error: errRes } = await db.from('resultats').insert(lignesResultats);
-
-      if (errRes) {
-        alert('Erreur résultats : ' + errRes.message);
-        return;
+      if (participants.length > 0) {
+        const lignesResultats = participants.map(p => ({ ...p, partie_id: partieCreee.id }));
+        const { error: errRes } = await insererResultatsAvecFallback(lignesResultats);
+        if (errRes) {
+          alert('Erreur résultats : ' + errRes.message);
+          return;
+        }
       }
 
       document.getElementById('nom-jeu').value = '';
       document.getElementById('mode-points').value = '321';
-      selects.forEach(s => {
+      document.getElementById('duree-partie').value = '';
+      document.getElementById('lieu-partie').value = '';
+      grille.querySelectorAll('.select-pos').forEach(s => {
         s.value = '';
         s.parentElement.querySelector('.pts-apercu').textContent = '—';
       });
+      grille.querySelectorAll('.input-score').forEach(inp => {
+        inp.value = '';
+      });
+      await chargerDonnees();
+    });
+
+    window.ouvrirEditionPartie = (id) => {
+      if (!isAdmin) return;
+      const partie = toutesParties.find(p => p.id === id);
+      if (!partie) return;
+
+      document.getElementById('edit-partie-id').value = partie.id;
+      document.getElementById('edit-date-partie').value = partie.date_partie;
+      document.getElementById('edit-nom-jeu').value = partie.nom_jeu;
+      document.getElementById('edit-duree-partie').value = normaliserDuree5Min(partie.duree) || '';
+      document.getElementById('edit-lieu-partie').value = partie.lieu || '';
+
+      const resList = partie.resultats || [];
+      const premierRes = resList[0];
+      const modeDetecte = (premierRes && premierRes.points === 1 && premierRes.position === 1 && resList.every(r => r.position === 1 || r.points === 0))
+        ? '1pt'
+        : '321';
+      document.getElementById('edit-mode-points').value = modeDetecte;
+
+      const editGrille = document.getElementById('edit-grille-joueurs');
+      editGrille.querySelectorAll('.select-pos').forEach(s => {
+        const jId = parseInt(s.dataset.joueurId);
+        const match = resList.find(r => r.joueur_id === jId);
+        s.value = match ? String(match.position) : '';
+        const scoreInp = editGrille.querySelector(`.input-score[data-joueur-id="${jId}"]`);
+        if (scoreInp) {
+          scoreInp.value = (match && match.score !== null && match.score !== undefined) ? match.score : '';
+        }
+      });
+
+      rafraichirApercuDansConteneur(editGrille, modeDetecte);
+      const editPanel = document.getElementById('edit-panel');
+      editPanel.classList.remove('hidden');
+      editPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    document.getElementById('btn-annuler-edit').addEventListener('click', () => {
+      document.getElementById('edit-panel').classList.add('hidden');
+    });
+
+    document.getElementById('form-edit-partie').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = parseInt(document.getElementById('edit-partie-id').value);
+      const date_partie = document.getElementById('edit-date-partie').value;
+      const saison = parseInt(date_partie.split('-')[0]);
+      const nom_jeu = document.getElementById('edit-nom-jeu').value.trim();
+      const mode = document.getElementById('edit-mode-points').value;
+      const duree = normaliserDuree5Min(document.getElementById('edit-duree-partie').value);
+      const lieu = document.getElementById('edit-lieu-partie').value.trim() || null;
+
+      const editGrille = document.getElementById('edit-grille-joueurs');
+      const participants = extraireParticipantsDepuisFormulaire(editGrille, mode);
+      const estDateFuture = date_partie > aujourdHuiIso();
+
+      if (!estDateFuture && participants.length < 2) {
+        alert('Sélectionne au moins 2 joueurs présents (ou choisis une date future).');
+        return;
+      }
+
+      const { error: errUpd } = await mettreAJourPartieAvecFallback(id, {
+        date_partie,
+        saison,
+        nom_jeu,
+        duree,
+        lieu
+      });
+
+      if (errUpd) {
+        alert('Erreur mise à jour partie : ' + errUpd.message);
+        return;
+      }
+
+      const { error: errDel } = await db.from('resultats').delete().eq('partie_id', id);
+      if (errDel) {
+        alert('Erreur suppression anciens résultats : ' + errDel.message);
+        return;
+      }
+
+      if (participants.length > 0) {
+        const lignes = participants.map(p => ({ ...p, partie_id: id }));
+        const { error: errIns } = await insererResultatsAvecFallback(lignes);
+        if (errIns) {
+          alert('Erreur enregistrement résultats : ' + errIns.message);
+          return;
+        }
+      }
+
+      document.getElementById('edit-panel').classList.add('hidden');
       await chargerDonnees();
     });
 
