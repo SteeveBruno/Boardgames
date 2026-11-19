@@ -28,7 +28,7 @@
         </div>
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold text-amber-400">Classement & Statistiques</h1>
-          <p class="text-slate-400 text-sm">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant <span class="text-xs text-slate-500">(v3)</span></p>
+          <p class="text-slate-400 text-sm">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant <span class="text-xs text-slate-500">(v4)</span></p>
         </div>
       </div>
 
@@ -583,7 +583,7 @@
               </thead>
               <tbody class="divide-y divide-slate-800">
                 ${jeuxArray
-                  .sort((a, b) => b.parties - a.parties || b.points - a.points)
+                  .sort((a, b) => a.jeu.localeCompare(b.jeu, 'fr'))
                   .map(x => `
                     <tr>
                       <td class="p-2.5 font-medium">${x.jeu}</td>
@@ -617,7 +617,7 @@
         });
       });
 
-      const listeJeux = Object.values(jeuxMap).sort((a, b) => b.parties - a.parties || b.pointsTotal - a.pointsTotal);
+      const listeJeux = Object.values(jeuxMap).sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
 
       document.getElementById('tbody-stats-jeux').innerHTML = listeJeux.map(j => {
         const triGagnants = Object.entries(j.victoiresParJoueur).sort((a, b) => b[1] - a[1]);
