@@ -30,7 +30,7 @@
 
       <div>
         <h1 class="text-2xl sm:text-4xl font-bold text-amber-400 tracking-tight">Classement & Statistiques</h1>
-        <p class="text-slate-400 text-sm mt-1">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant <span class="text-xs text-slate-500">(v7)</span></p>
+        <p class="text-slate-400 text-sm mt-1">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant • 5 réguliers <span class="text-xs text-slate-500">(v8)</span></p>
       </div>
 
       <div class="flex flex-wrap justify-center items-center gap-3 pt-1">
@@ -210,7 +210,21 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pZ3Z0aWlvbGpvZ3l3YmtlZWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwOTY1ODEsImV4cCI6MjExMDY3MjU4MX0.3nvZrlTvbLas8Znbqi4wrLy_XPlHvv53mJcxG3aJEH8';
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // 5 JOUEURS PRINCIPAUX (insensible à la casse et aux accents)
+    const JOUEURS_REGULIERS = ['louis', 'steeve', 'patrick', 'eric', 'steven'];
+    function normaliserNom(nom) {
+      return (nom || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+    }
+    function estJoueurRegulier(nom) {
+      return JOUEURS_REGULIERS.includes(normaliserNom(nom));
+    }
+
     let joueursList = [];
+    let joueursReguliersIds = new Set();
     let toutesParties = [];
     let championsHistoriques = [];
     let isAdmin = false;
@@ -280,11 +294,14 @@
       if (error) {
         afficherErreur('Erreur lecture table "joueurs" : ' + error.message);
         joueursList = [];
+        joueursReguliersIds = new Set();
         return;
       }
 
       effacerErreur();
-      joueursList = data || [];
+      const tousJoueurs = data || [];
+      joueursList = tousJoueurs.filter(j => estJoueurRegulier(j.nom));
+      joueursReguliersIds = new Set(joueursList.map(j => j.id));
 
       const grille = document.getElementById('grille-joueurs');
       grille.innerHTML = joueursList.map(j => `
@@ -301,7 +318,6 @@
               <option value="3">3e</option>
               <option value="4">4e</option>
               <option value="5">5e</option>
-              <option value="6">6e</option>
             </select>
             <span class="pts-apercu text-xs font-bold text-amber-400 w-11 text-right">—</span>
           </div>
@@ -317,10 +333,10 @@
       selectJoueurStats.innerHTML = joueursList
         .map(j => `<option value="${j.id}">${j.nom}</option>`)
         .join('');
-      if (valeurActuelle) {
+      if (valeurActuelle && joueursReguliersIds.has(parseInt(valeurActuelle))) {
         selectJoueurStats.value = valeurActuelle;
       } else {
-        const steeve = joueursList.find(j => j.nom === 'Steeve');
+        const steeve = joueursList.find(j => normaliserNom(j.nom) === 'steeve');
         if (steeve) selectJoueurStats.value = steeve.id;
       }
     }
@@ -368,6 +384,10 @@
       rendreHistorique(partiesFiltrees);
     }
 
+    function resultatsReguliers(partie) {
+      return (partie.resultats || []).filter(r => joueursReguliersIds.has(r.joueur_id));
+    }
+
     function calculerStatsJoueurs(parties) {
       const stats = {};
       joueursList.forEach(j => {
@@ -375,7 +395,7 @@
       });
 
       parties.forEach(p => {
-        (p.resultats || []).forEach(r => {
+        resultatsReguliers(p).forEach(r => {
           if (!stats[r.joueur_id]) return;
           stats[r.joueur_id].points += r.points;
           stats[r.joueur_id].parties += 1;
@@ -391,7 +411,6 @@
     function rendreClassement(parties) {
       const stats = calculerStatsJoueurs(parties);
       const classement = Object.values(stats)
-        .filter(j => j.parties > 0)
         .sort((a, b) => b.points - a.points || b.p1 - a.p1 || a.nom.localeCompare(b.nom));
 
       document.getElementById('tbody-classement').innerHTML = classement.map((j, idx) => {
@@ -421,15 +440,11 @@
       if (chartInstance) chartInstance.destroy();
 
       const titre = document.getElementById('titre-graphique');
-
       const chrono = [...parties].sort((a, b) => a.date_partie.localeCompare(b.date_partie) || a.id - b.id);
-
-      const actifsIds = new Set();
-      chrono.forEach(p => (p.resultats || []).forEach(r => actifsIds.add(r.joueur_id)));
-      const joueursActifs = joueursList.filter(j => actifsIds.has(j.id));
+      const joueursActifs = joueursList;
 
       if (filtreSaison === 'all') {
-        titre.textContent = '📈 Points par saison (2022–2026)';
+        titre.textContent = '📈 Points par saison (2022–2026) — 5 réguliers';
         const saisons = [...new Set(chrono.map(p => p.saison))].sort((a, b) => a - b);
 
         const datasets = joueursActifs.map(j => ({
@@ -438,7 +453,7 @@
             return chrono
               .filter(p => p.saison === s)
               .reduce((acc, p) => {
-                const r = (p.resultats || []).find(x => x.joueur_id === j.id);
+                const r = resultatsReguliers(p).find(x => x.joueur_id === j.id);
                 return acc + (r ? r.points : 0);
               }, 0);
           }),
@@ -464,7 +479,7 @@
           }
         });
       } else {
-        titre.textContent = `📈 Évolution cumulative des points — Saison ${filtreSaison}`;
+        titre.textContent = `📈 Évolution cumulative des points — Saison ${filtreSaison} (5 réguliers)`;
         const datesUniques = [...new Set(chrono.map(p => p.date_partie))];
         const cumuls = {};
         joueursActifs.forEach(j => cumuls[j.id] = 0);
@@ -475,7 +490,7 @@
         datesUniques.forEach(d => {
           const partiesDuJour = chrono.filter(p => p.date_partie === d);
           partiesDuJour.forEach(p => {
-            (p.resultats || []).forEach(r => {
+            resultatsReguliers(p).forEach(r => {
               if (cumuls[r.joueur_id] !== undefined) cumuls[r.joueur_id] += r.points;
             });
           });
@@ -519,7 +534,7 @@
       const parJeu = {};
 
       parties.forEach(p => {
-        const res = (p.resultats || []).find(r => r.joueur_id === joueurId);
+        const res = resultatsReguliers(p).find(r => r.joueur_id === joueurId);
         if (!res) return;
 
         totalPts += res.points;
@@ -604,12 +619,15 @@
     function rendreStatsJeux(parties) {
       const jeuxMap = {};
       parties.forEach(p => {
+        const resReg = resultatsReguliers(p);
+        if (resReg.length === 0) return;
+
         const nom = p.nom_jeu;
         if (!jeuxMap[nom]) {
           jeuxMap[nom] = { nom, parties: 0, pointsTotal: 0, victoiresParJoueur: {} };
         }
         jeuxMap[nom].parties += 1;
-        (p.resultats || []).forEach(r => {
+        resReg.forEach(r => {
           jeuxMap[nom].pointsTotal += r.points;
           if (r.position === 1 && r.joueurs) {
             const jNom = r.joueurs.nom;
@@ -671,7 +689,7 @@
 
     function rendreHistorique(parties) {
       document.getElementById('liste-parties').innerHTML = parties.map(p => {
-        const resTries = [...(p.resultats || [])].sort((a, b) => a.position - b.position || b.points - a.points);
+        const resTries = [...resultatsReguliers(p)].sort((a, b) => a.position - b.position || b.points - a.points);
         const badges = resTries.map(r => {
           const medaille = r.position === 1 ? '🥇' : r.position === 2 ? '🥈' : r.position === 3 ? '🥉' : `${r.position}e`;
           const nomJoueur = r.joueurs ? r.joueurs.nom : 'Joueur';
