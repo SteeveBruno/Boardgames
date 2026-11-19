@@ -8,10 +8,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    .logo-fondu {
+    .logo-fondu-noir {
       mix-blend-lighten;
-      -webkit-mask-image: radial-gradient(ellipse 74% 74% at 50% 50%, #000 62%, rgba(0, 0, 0, 0.45) 84%, transparent 100%);
-      mask-image: radial-gradient(ellipse 74% 74% at 50% 50%, #000 62%, rgba(0, 0, 0, 0.45) 84%, transparent 100%);
+      -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 56%, rgba(0, 0, 0, 0.5) 78%, transparent 98%);
+      mask-image: radial-gradient(circle at 50% 50%, #000 56%, rgba(0, 0, 0, 0.5) 78%, transparent 98%);
     }
   </style>
 </head>
@@ -27,17 +27,17 @@
         <img
           src="logo.png"
           alt="Logo Ligue de Jeux de Société"
-          class="logo-fondu h-32 w-32 sm:h-40 sm:w-40 md:h-44 md:w-44 object-contain select-none"
+          class="logo-fondu-noir h-64 w-64 sm:h-80 sm:w-80 md:h-96 md:w-96 object-contain select-none"
           onerror="this.style.display='none'; document.getElementById('logo-fallback').classList.remove('hidden');"
         >
-        <div id="logo-fallback" class="hidden h-32 w-32 sm:h-40 sm:w-40 rounded-full bg-slate-800/60 border border-amber-500/30 flex items-center justify-center text-5xl">
+        <div id="logo-fallback" class="hidden h-64 w-64 sm:h-80 sm:w-80 md:h-96 md:w-96 rounded-full bg-slate-800/60 border border-amber-500/30 flex items-center justify-center text-7xl">
           🎲
         </div>
       </div>
 
       <div>
         <h1 class="text-2xl sm:text-4xl font-bold text-amber-400 tracking-tight">Classement & Statistiques</h1>
-        <p class="text-slate-400 text-sm mt-1">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant <span class="text-xs text-slate-500">(v5)</span></p>
+        <p class="text-slate-400 text-sm mt-1">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant <span class="text-xs text-slate-500">(v6)</span></p>
       </div>
 
       <div class="flex flex-wrap justify-center items-center gap-3 pt-1">
