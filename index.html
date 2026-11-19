@@ -30,7 +30,7 @@
 
       <div>
         <h1 class="text-2xl sm:text-4xl font-bold text-amber-400 tracking-tight">Classement & Statistiques</h1>
-        <p class="text-slate-400 text-sm mt-1">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant • 5 réguliers <span class="text-xs text-slate-500">(v8)</span></p>
+        <p class="text-slate-400 text-sm mt-1">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant • 5 réguliers <span class="text-xs text-slate-500">(v9)</span></p>
       </div>
 
       <div class="flex flex-wrap justify-center items-center gap-3 pt-1">
@@ -210,8 +210,8 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pZ3Z0aWlvbGpvZ3l3YmtlZWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwOTY1ODEsImV4cCI6MjExMDY3MjU4MX0.3nvZrlTvbLas8Znbqi4wrLy_XPlHvv53mJcxG3aJEH8';
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 5 JOUEURS PRINCIPAUX (insensible à la casse et aux accents)
-    const JOUEURS_REGULIERS = ['louis', 'steeve', 'patrick', 'eric', 'steven'];
+    // 5 JOUEURS PRINCIPAUX : Louis, Steeve, Patrick, Éric et Steven
+    const JOUEURS_EXACTS = ['louis', 'steeve', 'patrick', 'eric', 'steven'];
     function normaliserNom(nom) {
       return (nom || '')
         .trim()
@@ -220,7 +220,8 @@
         .replace(/[\u0300-\u036f]/g, '');
     }
     function estJoueurRegulier(nom) {
-      return JOUEURS_REGULIERS.includes(normaliserNom(nom));
+      const n = normaliserNom(nom);
+      return JOUEURS_EXACTS.includes(n) || n.includes('eric');
     }
 
     let joueursList = [];
