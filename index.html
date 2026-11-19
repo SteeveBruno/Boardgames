@@ -30,7 +30,7 @@
 
       <div>
         <h1 class="text-2xl sm:text-4xl font-bold text-amber-400 tracking-tight">Classement & Statistiques</h1>
-        <p class="text-slate-400 text-sm mt-1">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant • 5 réguliers <span class="text-xs text-slate-500">(v16)</span></p>
+        <p class="text-slate-400 text-sm mt-1">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant • 5 réguliers <span class="text-xs text-slate-500">(v17)</span></p>
       </div>
 
       <div class="flex flex-wrap justify-center items-center gap-3 pt-1">
@@ -61,7 +61,42 @@
       </form>
     </div>
 
-    <!-- Panneau d'édition d'une partie existante ou future (Visible uniquement si connecté et en cours d'édition) -->
+    <!-- Fenêtre modale détaillée d'une partie -->
+    <div id="modal-partie" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-partie-titre">
+      <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-4">
+        <div class="flex items-start justify-between gap-4 border-b border-slate-800 pb-3">
+          <div>
+            <div id="modal-partie-date" class="text-xs text-slate-400"></div>
+            <h3 id="modal-partie-titre" class="text-xl font-bold text-amber-400 mt-0.5"></h3>
+          </div>
+          <button type="button" id="btn-fermer-modal-partie" class="text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-semibold">
+            ✕ Fermer
+          </button>
+        </div>
+
+        <div id="modal-partie-infos" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+          <!-- Rempli par JS -->
+        </div>
+
+        <div class="overflow-x-auto bg-slate-800/80 rounded-xl border border-slate-700/80">
+          <table class="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead>
+              <tr class="border-b border-slate-700 text-slate-400 text-xs uppercase">
+                <th class="p-2.5">Pos.</th>
+                <th class="p-2.5">Joueur</th>
+                <th class="p-2.5 text-right">Score</th>
+                <th class="p-2.5 text-right">Points</th>
+              </tr>
+            </thead>
+            <tbody id="modal-partie-resultats" class="divide-y divide-slate-700/60">
+              <!-- Rempli par JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panneau d'édition d'une partie existante (Visible uniquement si connecté et en cours d'édition) -->
     <section id="edit-panel" class="hidden bg-slate-800/95 border border-sky-400/50 p-5 rounded-xl mb-8 shadow-lg">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold text-sky-400">✏️ Modifier la partie</h2>
@@ -73,7 +108,7 @@
         <input type="hidden" id="edit-partie-id">
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
           <div>
-            <label class="block text-xs text-slate-400 mb-1">Date (passée ou future)</label>
+            <label class="block text-xs text-slate-400 mb-1">Date de la partie</label>
             <input type="date" id="edit-date-partie" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
           </div>
           <div>
@@ -110,9 +145,9 @@
       </form>
     </section>
 
-    <!-- Formulaire d'ajout de partie / partie future (Visible uniquement si connecté) -->
+    <!-- Formulaire d'ajout de partie (Visible uniquement si connecté) -->
     <section id="admin-panel" class="hidden bg-slate-800/80 border border-amber-500/40 p-5 rounded-xl mb-8">
-      <h2 class="text-lg font-bold text-amber-400 mb-4">➕ Ajouter une partie (ou planifier une partie future)</h2>
+      <h2 class="text-lg font-bold text-amber-400 mb-4">➕ Ajouter une partie</h2>
       <form id="form-partie" class="space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
           <div>
@@ -229,9 +264,9 @@
       </div>
     </section>
 
-    <!-- Historique des soirées / parties futures -->
+    <!-- Historique des parties -->
     <section>
-      <h2 class="text-xl font-bold mb-3">📅 Historique & parties à venir</h2>
+      <h2 class="text-xl font-bold mb-3">📅 Historique des parties</h2>
       <div id="liste-parties" class="space-y-3">
         <!-- Rempli par JS -->
       </div>
@@ -431,7 +466,6 @@
       });
     }
 
-    // Ajuste automatiquement la position des joueurs ayant un score selon l'ordre décroissant des scores
     function ajusterPositionsSelonScores(containerEl, mode) {
       const inputsScore = [...containerEl.querySelectorAll('.input-score')];
       const avecScore = [];
@@ -870,18 +904,75 @@
       `).join('');
     }
 
-    function aujourdHuiIso() {
-      const d = new Date();
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      return `${yyyy}-${mm}-${dd}`;
+    window.ouvrirDetailsPartie = (id) => {
+      const partie = toutesParties.find(p => p.id === id);
+      if (!partie) return;
+
+      const resTries = [...resultatsReguliers(partie)].sort((a, b) => a.position - b.position || b.points - a.points);
+      const dureeTxt = formaterDureeAffichage(partie.duree) || 'Non précisée';
+      const lieuTxt = partie.lieu || 'Non précisé';
+      const totalPts = resTries.reduce((acc, r) => acc + (r.points || 0), 0);
+
+      document.getElementById('modal-partie-date').textContent = `Saison ${partie.saison} • ${partie.date_partie}`;
+      document.getElementById('modal-partie-titre').textContent = partie.nom_jeu;
+
+      document.getElementById('modal-partie-infos').innerHTML = `
+        <div class="bg-slate-800/90 border border-slate-700/80 rounded-xl p-2.5">
+          <div class="text-slate-400">📍 Lieu</div>
+          <div class="font-semibold text-slate-100 mt-0.5 truncate" title="${lieuTxt}">${lieuTxt}</div>
+        </div>
+        <div class="bg-slate-800/90 border border-slate-700/80 rounded-xl p-2.5">
+          <div class="text-slate-400">⏱️ Durée</div>
+          <div class="font-semibold text-slate-100 mt-0.5">${dureeTxt}</div>
+        </div>
+        <div class="bg-slate-800/90 border border-slate-700/80 rounded-xl p-2.5">
+          <div class="text-slate-400">🏅 Points distribués</div>
+          <div class="font-semibold text-amber-400 mt-0.5">${totalPts} pt${totalPts > 1 ? 's' : ''} (${resTries.length} joueur${resTries.length > 1 ? 's' : ''})</div>
+        </div>
+      `;
+
+      const tbody = document.getElementById('modal-partie-resultats');
+      if (resTries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400 italic">Aucun résultat enregistré pour cette partie.</td></tr>';
+      } else {
+        tbody.innerHTML = resTries.map(r => {
+          const medaille = r.position === 1 ? '🥇 1er' : r.position === 2 ? '🥈 2e' : r.position === 3 ? '🥉 3e' : `${r.position}e`;
+          const nomJoueur = r.joueurs ? r.joueurs.nom : 'Joueur';
+          const couleur = r.joueurs && r.joueurs.couleur ? r.joueurs.couleur : '#94a3b8';
+          const scoreAff = (r.score !== null && r.score !== undefined && r.score !== '') ? r.score : '—';
+          return `
+            <tr class="hover:bg-slate-700/30">
+              <td class="p-2.5 font-semibold whitespace-nowrap">${medaille}</td>
+              <td class="p-2.5 font-semibold">
+                <span class="inline-flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full inline-block" style="background:${couleur}"></span>
+                  ${nomJoueur}
+                </span>
+              </td>
+              <td class="p-2.5 text-right text-slate-300 font-medium">${scoreAff}</td>
+              <td class="p-2.5 text-right font-bold text-amber-400">${r.points} pt${r.points > 1 ? 's' : ''}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('modal-partie').classList.remove('hidden');
+    };
+
+    function fermerModalPartie() {
+      document.getElementById('modal-partie').classList.add('hidden');
     }
 
+    document.getElementById('btn-fermer-modal-partie').addEventListener('click', fermerModalPartie);
+    document.getElementById('modal-partie').addEventListener('click', (e) => {
+      if (e.target.id === 'modal-partie') fermerModalPartie();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') fermerModalPartie();
+    });
+
     function rendreHistorique(parties) {
-      const today = aujourdHuiIso();
       document.getElementById('liste-parties').innerHTML = parties.map(p => {
-        const isFuture = p.date_partie > today;
         const resTries = [...resultatsReguliers(p)].sort((a, b) => a.position - b.position || b.points - a.points);
         const badges = resTries.map(r => {
           const medaille = r.position === 1 ? '🥇' : r.position === 2 ? '🥈' : r.position === 3 ? '🥉' : `${r.position}e`;
@@ -894,25 +985,27 @@
 
         const dureeAffichee = formaterDureeAffichage(p.duree);
         const metaInfos = [
-          isFuture ? '<span class="text-sky-400 font-semibold">À venir</span>' : null,
           dureeAffichee ? `⏱️ ${dureeAffichee}` : null,
           p.lieu ? `📍 ${p.lieu}` : null
         ].filter(Boolean).join(' • ');
 
         const actionsAdmin = isAdmin
-          ? `<button type="button" onclick="ouvrirEditionPartie(${p.id})" class="text-sky-400 hover:text-sky-300 text-xs ml-2">Modifier</button>
-             <button type="button" onclick="supprimerPartie(${p.id})" class="text-red-400 hover:text-red-300 text-xs ml-2">Supprimer</button>`
+          ? `<button type="button" onclick="event.stopPropagation(); ouvrirEditionPartie(${p.id})" class="text-sky-400 hover:text-sky-300 text-xs ml-2">Modifier</button>
+             <button type="button" onclick="event.stopPropagation(); supprimerPartie(${p.id})" class="text-red-400 hover:text-red-300 text-xs ml-2">Supprimer</button>`
           : '';
 
         return `
-          <div class="bg-slate-800 border ${isFuture ? 'border-sky-500/40' : 'border-slate-700'} p-4 rounded-xl flex flex-wrap justify-between items-center gap-3">
+          <div onclick="ouvrirDetailsPartie(${p.id})" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();ouvrirDetailsPartie(${p.id});}" class="bg-slate-800 hover:bg-slate-800/80 border border-slate-700 hover:border-amber-500/40 p-4 rounded-xl flex flex-wrap justify-between items-center gap-3 cursor-pointer transition">
             <div>
               <div class="text-xs text-slate-400 flex flex-wrap items-center gap-1.5">
                 <span>${p.date_partie}</span>
                 ${metaInfos ? `<span>• ${metaInfos}</span>` : ''}
                 ${actionsAdmin}
               </div>
-              <div class="font-bold text-base text-slate-100 mt-0.5">${p.nom_jeu}</div>
+              <div class="font-bold text-base text-slate-100 mt-0.5 flex items-center gap-2">
+                <span>${p.nom_jeu}</span>
+                <span class="text-[11px] font-normal text-amber-400/80">🔍 Détails</span>
+              </div>
             </div>
             <div class="flex flex-wrap gap-2">${badges || '<span class="text-xs text-slate-500 italic">Aucun résultat enregistré</span>'}</div>
           </div>
@@ -981,10 +1074,9 @@
 
       const grille = document.getElementById('grille-joueurs');
       const participants = extraireParticipantsDepuisFormulaire(grille, mode);
-      const estDateFuture = date_partie > aujourdHuiIso();
 
-      if (!estDateFuture && participants.length < 2) {
-        alert('Sélectionne au moins 2 joueurs présents (ou choisis une date future pour planifier la partie).');
+      if (participants.length < 2) {
+        alert('Sélectionne au moins 2 joueurs présents.');
         return;
       }
 
@@ -1075,10 +1167,9 @@
 
       const editGrille = document.getElementById('edit-grille-joueurs');
       const participants = extraireParticipantsDepuisFormulaire(editGrille, mode);
-      const estDateFuture = date_partie > aujourdHuiIso();
 
-      if (!estDateFuture && participants.length < 2) {
-        alert('Sélectionne au moins 2 joueurs présents (ou choisis une date future).');
+      if (participants.length < 2) {
+        alert('Sélectionne au moins 2 joueurs présents.');
         return;
       }
 
