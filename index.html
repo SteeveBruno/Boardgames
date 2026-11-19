@@ -7,6 +7,13 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .logo-fondu {
+      mix-blend-lighten;
+      -webkit-mask-image: radial-gradient(ellipse 74% 74% at 50% 50%, #000 62%, rgba(0, 0, 0, 0.45) 84%, transparent 100%);
+      mask-image: radial-gradient(ellipse 74% 74% at 50% 50%, #000 62%, rgba(0, 0, 0, 0.45) 84%, transparent 100%);
+    }
+  </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
 
@@ -14,26 +21,27 @@
     <!-- Bandeau d'erreur global -->
     <div id="debug-erreur" class="hidden bg-rose-950/90 border border-rose-500 text-rose-200 p-3.5 rounded-xl mb-6 text-sm whitespace-pre-wrap"></div>
 
-    <!-- En-tête avec emplacement du Logo -->
-    <header class="flex flex-wrap justify-between items-center border-b border-slate-700 pb-4 mb-6 gap-4">
-      <div class="flex items-center gap-3.5">
+    <!-- En-tête centré avec grand logo fondu au-dessus du titre et des menus -->
+    <header class="flex flex-col items-center text-center border-b border-slate-800 pb-6 mb-6 gap-4">
+      <div class="relative flex items-center justify-center">
         <img
           src="logo.png"
           alt="Logo Ligue de Jeux de Société"
-          class="h-12 w-12 sm:h-14 sm:w-14 object-contain rounded-xl bg-slate-800 border border-slate-700 p-1 shrink-0"
+          class="logo-fondu h-32 w-32 sm:h-40 sm:w-40 md:h-44 md:w-44 object-contain select-none"
           onerror="this.style.display='none'; document.getElementById('logo-fallback').classList.remove('hidden');"
         >
-        <div id="logo-fallback" class="hidden h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-slate-800 border border-amber-500/40 flex items-center justify-center text-2xl shrink-0">
+        <div id="logo-fallback" class="hidden h-32 w-32 sm:h-40 sm:w-40 rounded-full bg-slate-800/60 border border-amber-500/30 flex items-center justify-center text-5xl">
           🎲
-        </div>
-        <div>
-          <h1 class="text-2xl sm:text-3xl font-bold text-amber-400">Classement & Statistiques</h1>
-          <p class="text-slate-400 text-sm">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant <span class="text-xs text-slate-500">(v4)</span></p>
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-3">
-        <select id="filtre-saison" class="bg-slate-800 border border-slate-600 rounded px-3 py-1.5 text-sm">
+      <div>
+        <h1 class="text-2xl sm:text-4xl font-bold text-amber-400 tracking-tight">Classement & Statistiques</h1>
+        <p class="text-slate-400 text-sm mt-1">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant <span class="text-xs text-slate-500">(v5)</span></p>
+      </div>
+
+      <div class="flex flex-wrap justify-center items-center gap-3 pt-1">
+        <select id="filtre-saison" class="bg-slate-800 border border-slate-600 rounded-lg px-3.5 py-1.5 text-sm">
           <option value="2026">Saison 2026</option>
           <option value="2025">Saison 2025</option>
           <option value="2024">Saison 2024</option>
@@ -41,14 +49,14 @@
           <option value="2022">Saison 2022</option>
           <option value="all">Toutes saisons (2022–2026)</option>
         </select>
-        <button id="btn-auth" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3 py-1.5 rounded text-sm">
+        <button id="btn-auth" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3.5 py-1.5 rounded-lg text-sm">
           Connexion Admin
         </button>
       </div>
     </header>
 
     <!-- Modale de connexion Admin -->
-    <div id="login-box" class="hidden bg-slate-800 border border-slate-700 p-4 rounded-lg mb-6 max-w-md ml-auto">
+    <div id="login-box" class="hidden bg-slate-800 border border-slate-700 p-4 rounded-lg mb-6 max-w-md mx-auto">
       <h2 class="font-bold mb-3 text-amber-400">Connexion Administrateur</h2>
       <form id="form-login" class="space-y-3">
         <input type="email" id="login-email" placeholder="Courriel" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
