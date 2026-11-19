@@ -30,7 +30,7 @@
 
       <div class="w-full px-1">
         <h1 class="text-xl sm:text-4xl font-bold text-amber-400 tracking-tight">Classement & Statistiques</h1>
-        <p class="text-slate-400 text-xs sm:text-sm mt-1">Barème : 3 / 2 / 1 pt • Jeux courts : 1 pt • 5 réguliers <span class="text-xs text-slate-500">(v21)</span></p>
+        <p class="text-slate-400 text-xs sm:text-sm mt-1">Barème : 3 / 2 / 1 pt • Jeux courts : 1 pt • 5 réguliers <span class="text-xs text-slate-500">(v22)</span></p>
       </div>
 
       <div class="flex flex-wrap justify-center items-center gap-2.5 pt-1 w-full">
@@ -1129,23 +1129,35 @@
     }
 
     async function sauvegarderPartieAvecFallback(payloadPartie) {
-      const res = await db.from('parties').insert([payloadPartie]).select().single();
-      if (!res.error) return res;
+      const res = await db.from('parties').insert([payloadPartie]).select();
+      if (!res.error) {
+        return { data: res.data?.[0] || null, error: null };
+      }
       if ((payloadPartie.duree !== undefined || payloadPartie.lieu !== undefined) && /column|duree|lieu/i.test(res.error.message)) {
         const { duree, lieu, ...basePayload } = payloadPartie;
-        return await db.from('parties').insert([basePayload]).select().single();
+        const retry = await db.from('parties').insert([basePayload]).select();
+        return { data: retry.data?.[0] || null, error: retry.error };
       }
-      return res;
+      return { data: null, error: res.error };
     }
 
     async function mettreAJourPartieAvecFallback(id, payloadPartie) {
-      const res = await db.from('parties').update(payloadPartie).eq('id', id).select().single();
-      if (!res.error) return res;
+      const res = await db.from('parties').update(payloadPartie).eq('id', id).select();
+      if (!res.error) {
+        if (!res.data || res.data.length === 0) {
+          return { data: null, error: { message: 'Aucune ligne mise à jour (vérifier les permissions/RLS sur la table "parties").' } };
+        }
+        return { data: res.data[0], error: null };
+      }
       if ((payloadPartie.duree !== undefined || payloadPartie.lieu !== undefined) && /column|duree|lieu/i.test(res.error.message)) {
         const { duree, lieu, ...basePayload } = payloadPartie;
-        return await db.from('parties').update(basePayload).eq('id', id).select().single();
+        const retry = await db.from('parties').update(basePayload).eq('id', id).select();
+        if (!retry.error && (!retry.data || retry.data.length === 0)) {
+          return { data: null, error: { message: 'Aucune ligne mise à jour (vérifier les permissions/RLS sur la table "parties").' } };
+        }
+        return { data: retry.data?.[0] || null, error: retry.error };
       }
-      return res;
+      return { data: null, error: res.error };
     }
 
     async function insererResultatsAvecFallback(lignes) {
@@ -1183,8 +1195,8 @@
         lieu
       });
 
-      if (errPartie) {
-        alert('Erreur : ' + errPartie.message);
+      if (errPartie || !partieCreee) {
+        alert('Erreur : ' + (errPartie?.message || 'Création de partie impossible'));
         return;
       }
 
