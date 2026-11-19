@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ligue de Jeux de Société — Classement & Stats</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+
+  <div class="max-w-6xl mx-auto p-4 sm:p-6">
+    <!-- En-tête avec emplacement du Logo -->
+    <header class="flex flex-wrap justify-between items-center border-b border-slate-700 pb-4 mb-6 gap-4">
+      <div class="flex items-center gap-3.5">
+        <!-- Remplace "logo.png" par le nom/chemin de ton fichier image (ex: logo.png, logo.svg) -->
+        <img
+          src="logo.png"
+          alt="Logo Ligue de Jeux de Société"
+          class="h-12 w-12 sm:h-14 sm:w-14 object-contain rounded-xl bg-slate-800 border border-slate-700 p-1 shrink-0"
+          onerror="this.style.display='none'; document.getElementById('logo-fallback').classList.remove('hidden');"
+        >
+        <div id="logo-fallback" class="hidden h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-slate-800 border border-amber-500/40 flex items-center justify-center text-2xl shrink-0">
+          🎲
+        </div>
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-bold text-amber-400">Classement & Statistiques</h1>
+          <p class="text-slate-400 text-sm">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <select id="filtre-saison" class="bg-slate-800 border border-slate-600 rounded px-3 py-1.5 text-sm">
+          <option value="2026">Saison 2026</option>
+          <option value="2025">Saison 2025</option>
+          <option value="2024">Saison 2024</option>
+          <option value="2023">Saison 2023</option>
+          <option value="2022">Saison 2022</option>
+          <option value="all">Toutes saisons (2022–2026)</option>
+        </select>
+        <button id="btn-auth" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3 py-1.5 rounded text-sm">
+          Connexion Admin
+        </button>
+      </div>
+    </header>
+
+    <!-- Modale de connexion Admin -->
+    <div id="login-box" class="hidden bg-slate-800 border border-slate-700 p-4 rounded-lg mb-6 max-w-md ml-auto">
+      <h2 class="font-bold mb-3 text-amber-400">Connexion Administrateur</h2>
+      <form id="form-login" class="space-y-3">
+        <input type="email" id="login-email" placeholder="Courriel" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+        <input type="password" id="login-password" placeholder="Mot de passe" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-2 rounded text-sm">Se connecter</button>
+      </form>
+    </div>
+
+    <!-- Formulaire d'ajout de partie (Visible uniquement si connecté) -->
+    <section id="admin-panel" class="hidden bg-slate-800/80 border border-amber-500/40 p-5 rounded-xl mb-8">
+      <h2 class="text-lg font-bold text-amber-400 mb-4">➕ Ajouter une partie</h2>
+      <form id="form-partie" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Date de la partie</label>
+            <input type="date" id="date-partie" required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Nom du jeu</label>
+            <input type="text" id="nom-jeu" list="liste-jeux" placeholder="Ex: Earth, Hitster..." required class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+            <datalist id="liste-jeux"></datalist>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Type de pointage</label>
+            <select id="mode-points" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm">
+              <option value="321" selected>Standard (3 / 2 / 1 pt)</option>
+              <option value="1pt">Partie courte (1 pt au gagnant)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-400 mb-2">Résultats par joueur (choisir la position finale ; laisser sur « Absent » si le joueur n'a pas joué)</label>
+          <div id="grille-joueurs" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <!-- Généré en JS -->
+          </div>
+        </div>
+
+        <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2 rounded text-sm">
+          Enregistrer les résultats
+        </button>
+      </form>
+    </section>
+
+    <!-- Tableau du Classement Général -->
+    <section class="mb-10">
+      <h2 class="text-xl font-bold mb-3">🏆 Classement</h2>
+      <div class="overflow-x-auto bg-slate-800 rounded-xl border border-slate-700">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-slate-700 text-slate-400 text-xs uppercase">
+              <th class="p-3">#</th>
+              <th class="p-3">Joueur</th>
+              <th class="p-3 text-center">Points</th>
+              <th class="p-3 text-center">Parties</th>
+              <th class="p-3 text-center">Moy./Partie</th>
+              <th class="p-3 text-center">🥇 1er</th>
+              <th class="p-3 text-center">🥈 2e</th>
+              <th class="p-3 text-center">🥉 3e</th>
+              <th class="p-3 text-center">% Victoire</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-classement" class="divide-y divide-slate-700/60 text-sm">
+            <!-- Rempli par JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Graphique d'évolution des points -->
+    <section class="mb-10 bg-slate-800 border border-slate-700 p-5 rounded-xl">
+      <h2 id="titre-graphique" class="text-xl font-bold mb-3">📈 Évolution cumulative des points</h2>
+      <div class="relative h-72 sm:h-80 w-full">
+        <canvas id="chart-evolution"></canvas>
+      </div>
+    </section>
+
+    <!-- Statistiques par joueur -->
+    <section class="mb-10 bg-slate-800/70 border border-slate-700 p-5 rounded-xl">
+      <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+        <h2 class="text-xl font-bold">👤 Statistiques par joueur</h2>
+        <select id="select-joueur-stats" class="bg-slate-900 border border-slate-600 rounded px-3 py-1.5 text-sm font-semibold">
+          <!-- Rempli par JS -->
+        </select>
+      </div>
+
+      <div id="fiche-joueur" class="space-y-4">
+        <!-- Rempli par JS -->
+      </div>
+    </section>
+
+    <!-- Statistiques par jeu -->
+    <section class="mb-10">
+      <h2 class="text-xl font-bold mb-3">🎯 Statistiques par jeu</h2>
+      <div class="overflow-x-auto bg-slate-800 rounded-xl border border-slate-700">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-slate-700 text-slate-400 text-xs uppercase">
+              <th class="p-3">Jeu</th>
+              <th class="p-3 text-center">Parties jouées</th>
+              <th class="p-3 text-center">Points distribués</th>
+              <th class="p-3">Gagnant(s) le(s) plus fréquent(s)</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-stats-jeux" class="divide-y divide-slate-700/60 text-sm">
+            <!-- Rempli par JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Palmarès des champions (2011 - 2026) -->
+    <section class="mb-10">
+      <h2 class="text-xl font-bold mb-3">👑 Palmarès des champions (2011–2026)</h2>
+      <div id="grille-palmares" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
+        <!-- Rempli par JS -->
+      </div>
+    </section>
+
+    <!-- Historique des soirées -->
+    <section>
+      <h2 class="text-xl font-bold mb-3">📅 Historique des parties</h2>
+      <div id="liste-parties" class="space-y-3">
+        <!-- Rempli par JS -->
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // CONFIGURATION SUPABASE
+    const SUPABASE_URL = 'https://nigvtiioljogywbkeebj.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_Naiu17NgtjJaXMeqZF-Ifg_odjGrrUa';
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let joueursList = [];
+    let toutesParties = [];
+    let championsHistoriques = [];
+    let isAdmin = false;
+    let chartInstance = null;
+
+    function calculerPoints(position, mode = '321') {
+      if (mode === '1pt') return position === 1 ? 1 : 0;
+      if (position === 1) return 3;
+      if (position === 2) return 2;
+      if (position === 3) return 1;
+      return 0;
+    }
+
+    document.getElementById('date-partie').valueAsDate = new Date();
+
+    async function verifierSession() {
+      const { data: { session } } = await db.auth.getSession();
+      isAdmin = !!session;
+      document.getElementById('admin-panel').classList.toggle('hidden', !isAdmin);
+      document.getElementById('login-box').classList.add('hidden');
+      document.getElementById('btn-auth').textContent = isAdmin ? 'Déconnexion' : 'Connexion Admin';
+      await chargerDonnees();
+    }
+
+    document.getElementById('btn-auth').addEventListener('click', async () => {
+      if (isAdmin) {
+        await db.auth.signOut();
+        await verifierSession();
+      } else {
+        document.getElementById('login-box').classList.toggle('hidden');
+      }
+    });
+
+    document.getElementById('form-login').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const { error } = await db.auth.signInWithPassword({ email, password });
+      if (error) alert('Erreur de connexion : ' + error.message);
+      else await verifierSession();
+    });
+
+    function rafraichirApercuPoints() {
+      const mode = document.getElementById('mode-points').value;
+      document.querySelectorAll('.select-pos').forEach(select => {
+        const apercu = select.parentElement.querySelector('.pts-apercu');
+        if (select.value === '') {
+          apercu.textContent = '—';
+        } else {
+          const pts = calculerPoints(parseInt(select.value), mode);
+          apercu.textContent = `${pts} pt${pts > 1 ? 's' : ''}`;
+        }
+      });
+    }
+
+    document.getElementById('mode-points').addEventListener('change', rafraichirApercuPoints);
+
+    async function chargerJoueurs() {
+      const { data } = await db.from('joueurs').select('*').order('nom');
+      joueursList = data || [];
+
+      const grille = document.getElementById('grille-joueurs');
+      grille.innerHTML = joueursList.map(j => `
+        <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="w-3 h-3 rounded-full shrink-0" style="background:${j.couleur}"></span>
+            <span class="font-semibold text-sm truncate">${j.nom}</span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <select data-joueur-id="${j.id}" class="select-pos bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs">
+              <option value="">Absent</option>
+              <option value="1">1er</option>
+              <option value="2">2e</option>
+              <option value="3">3e</option>
+              <option value="4">4e</option>
+              <option value="5">5e</option>
+              <option value="6">6e</option>
+            </select>
+            <span class="pts-apercu text-xs font-bold text-amber-400 w-11 text-right">—</span>
+          </div>
+        </div>
+      `).join('');
+
+      grille.querySelectorAll('.select-pos').forEach(select => {
+        select.addEventListener('change', rafraichirApercuPoints);
+      });
+
+      const selectJoueurStats = document.getElementById('select-joueur-stats');
+      const valeurActuelle = selectJoueurStats.value;
+      selectJoueurStats.innerHTML = joueursList
+        .map(j => `<option value="${j.id}">${j.nom}</option>`)
+        .join('');
+      if (valeurActuelle) {
+        selectJoueurStats.value = valeurActuelle;
+      } else {
+        const steeve = joueursList.find(j => j.nom === 'Steeve');
+        if (steeve) selectJoueurStats.value = steeve.id;
+      }
+    }
+
+    async function chargerDonnees() {
+      const filtreSaison = document.getElementById('filtre-saison').value;
+
+      const { data: partiesAll } = await db
+        .from('parties')
+        .select('*, resultats(*, joueurs(*))')
+        .order('date_partie', { ascending: false })
+        .order('id', { ascending: false });
+
+      const { data: champHist } = await db
+        .from('champions_historiques')
+        .select('*')
+        .order('saison');
+
+      toutesParties = partiesAll || [];
+      championsHistoriques = champHist || [];
+
+      const jeuxUniques = [...new Set(toutesParties.map(p => p.nom_jeu))].sort((a, b) => a.localeCompare(b, 'fr'));
+      document.getElementById('liste-jeux').innerHTML = jeuxUniques.map(j => `<option value="${j}">`).join('');
+
+      const partiesFiltrees = filtreSaison === 'all'
+        ? toutesParties
+        : toutesParties.filter(p => p.saison === parseInt(filtreSaison));
+
+      rendreClassement(partiesFiltrees);
+      rendreGraphique(partiesFiltrees, filtreSaison);
+      rendreStatsJoueur(partiesFiltrees);
+      rendreStatsJeux(partiesFiltrees);
+      rendrePalmares(toutesParties, championsHistoriques);
+      rendreHistorique(partiesFiltrees);
+    }
+
+    function calculerStatsJoueurs(parties) {
+      const stats = {};
+      joueursList.forEach(j => {
+        stats[j.id] = { ...j, points: 0, parties: 0, p1: 0, p2: 0, p3: 0 };
+      });
+
+      parties.forEach(p => {
+        p.resultats.forEach(r => {
+          if (!stats[r.joueur_id]) return;
+          stats[r.joueur_id].points += r.points;
+          stats[r.joueur_id].parties += 1;
+          if (r.position === 1) stats[r.joueur_id].p1 += 1;
+          if (r.position === 2) stats[r.joueur_id].p2 += 1;
+          if (r.position === 3) stats[r.joueur_id].p3 += 1;
+        });
+      });
+
+      return stats;
+    }
+
+    function rendreClassement(parties) {
+      const stats = calculerStatsJoueurs(parties);
+      const classement = Object.values(stats)
+        .filter(j => j.parties > 0)
+        .sort((a, b) => b.points - a.points || b.p1 - a.p1 || a.nom.localeCompare(b.nom));
+
+      document.getElementById('tbody-classement').innerHTML = classement.map((j, idx) => {
+        const moy = j.parties > 0 ? (j.points / j.parties).toFixed(2) : '0.00';
+        const winRate = j.parties > 0 ? Math.round((j.p1 / j.parties) * 100) + '%' : '0%';
+        return `
+          <tr class="hover:bg-slate-700/30">
+            <td class="p-3 font-bold text-slate-400">${idx + 1}</td>
+            <td class="p-3 font-semibold flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full inline-block" style="background:${j.couleur}"></span>
+              ${j.nom}
+            </td>
+            <td class="p-3 text-center font-bold text-amber-400 text-base">${j.points}</td>
+            <td class="p-3 text-center">${j.parties}</td>
+            <td class="p-3 text-center text-slate-300">${moy}</td>
+            <td class="p-3 text-center">${j.p1}</td>
+            <td class="p-3 text-center">${j.p2}</td>
+            <td class="p-3 text-center">${j.p3}</td>
+            <td class="p-3 text-center text-emerald-400">${winRate}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function rendreGraphique(parties, filtreSaison) {
+      const ctx = document.getElementById('chart-evolution').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+
+      const titre = document.getElementById('titre-graphique');
+
+      // Ordre chronologique pour l'évolution
+      const chrono = [...parties].sort((a, b) => a.date_partie.localeCompare(b.date_partie) || a.id - b.id);
+
+      // Identifier les joueurs ayant participé durant la période
+      const actifsIds = new Set();
+      chrono.forEach(p => p.resultats.forEach(r => actifsIds.add(r.joueur_id)));
+      const joueursActifs = joueursList.filter(j => actifsIds.has(j.id));
+
+      if (filtreSaison === 'all') {
+        titre.textContent = '📈 Points par saison (2022–2026)';
+        const saisons = [...new Set(chrono.map(p => p.saison))].sort((a, b) => a - b);
+
+        const datasets = joueursActifs.map(j => ({
+          label: j.nom,
+          data: saisons.map(s => {
+            return chrono
+              .filter(p => p.saison === s)
+              .reduce((acc, p) => {
+                const r = p.resultats.find(x => x.joueur_id === j.id);
+                return acc + (r ? r.points : 0);
+              }, 0);
+          }),
+          borderColor: j.couleur,
+          backgroundColor: j.couleur,
+          tension: 0.25,
+          borderWidth: 2.5,
+          pointRadius: 4
+        }));
+
+        chartInstance = new Chart(ctx, {
+          type: 'line',
+          data: { labels: saisons.map(String), datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { labels: { color: '#cbd5e1' } } },
+            scales: {
+              x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+              y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+            }
+          }
+        });
+      } else {
+        titre.textContent = `📈 Évolution cumulative des points — Saison ${filtreSaison}`;
+        const datesUniques = [...new Set(chrono.map(p => p.date_partie))];
+        const cumuls = {};
+        joueursActifs.forEach(j => cumuls[j.id] = 0);
+
+        const series = {};
+        joueursActifs.forEach(j => series[j.id] = []);
+
+        datesUniques.forEach(d => {
+          const partiesDuJour = chrono.filter(p => p.date_partie === d);
+          partiesDuJour.forEach(p => {
+            p.resultats.forEach(r => {
+              if (cumuls[r.joueur_id] !== undefined) cumuls[r.joueur_id] += r.points;
+            });
+          });
+          joueursActifs.forEach(j => series[j.id].push(cumuls[j.id]));
+        });
+
+        const datasets = joueursActifs.map(j => ({
+          label: j.nom,
+          data: series[j.id],
+          borderColor: j.couleur,
+          backgroundColor: j.couleur,
+          tension: 0.2,
+          borderWidth: 2.5,
+          pointRadius: 3
+        }));
+
+        chartInstance = new Chart(ctx, {
+          type: 'line',
+          data: { labels: datesUniques, datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { labels: { color: '#cbd5e1' } } },
+            scales: {
+              x: { ticks: { color: '#94a3b8', maxRotation: 45 }, grid: { color: '#334155' } },
+              y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+            }
+          }
+        });
+      }
+    }
+
+    function rendreStatsJoueur(parties) {
+      const joueurId = parseInt(document.getElementById('select-joueur-stats').value);
+      const joueur = joueursList.find(j => j.id === joueurId);
+      const conteneur = document.getElementById('fiche-joueur');
+      if (!joueur) return;
+
+      let totalPts = 0, totalParties = 0, v1 = 0;
+      const parJeu = {};
+
+      parties.forEach(p => {
+        const res = p.resultats.find(r => r.joueur_id === joueurId);
+        if (!res) return;
+
+        totalPts += res.points;
+        totalParties += 1;
+        if (res.position === 1) v1 += 1;
+
+        const jeu = p.nom_jeu;
+        if (!parJeu[jeu]) parJeu[jeu] = { jeu, parties: 0, points: 0, victoires: 0 };
+        parJeu[jeu].parties += 1;
+        parJeu[jeu].points += res.points;
+        if (res.position === 1) parJeu[jeu].victoires += 1;
+      });
+
+      const jeuxArray = Object.values(parJeu);
+      const jeuPlusJoue = [...jeuxArray].sort((a, b) => b.parties - a.parties || b.points - a.points)[0];
+      const jeuFetiche = [...jeuxArray]
+        .filter(x => x.parties >= 2)
+        .sort((a, b) => (b.points / b.parties) - (a.points / a.parties) || b.points - a.points)[0]
+        || [...jeuxArray].sort((a, b) => (b.points / b.parties) - (a.points / a.parties))[0];
+      const beteNoire = [...jeuxArray]
+        .filter(x => x.parties >= 2)
+        .sort((a, b) => (a.points / a.parties) - (b.points / b.parties) || a.points - b.points)[0];
+
+      const moyGlobale = totalParties > 0 ? (totalPts / totalParties).toFixed(2) : '0.00';
+      const winRate = totalParties > 0 ? Math.round((v1 / totalParties) * 100) + '%' : '0%';
+
+      conteneur.innerHTML = `
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg">
+            <div class="text-xs text-slate-400">Points / Parties</div>
+            <div class="text-xl font-bold text-amber-400">${totalPts} pts <span class="text-sm text-slate-400 font-normal">(${totalParties} p.)</span></div>
+            <div class="text-xs text-slate-400 mt-0.5">Moy. : ${moyGlobale} pt/p. • ${winRate} victoires</div>
+          </div>
+          <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg">
+            <div class="text-xs text-slate-400">Jeu le plus joué</div>
+            <div class="text-sm font-bold text-slate-100 mt-1 truncate">${jeuPlusJoue ? jeuPlusJoue.jeu : '—'}</div>
+            <div class="text-xs text-slate-400">${jeuPlusJoue ? `${jeuPlusJoue.parties} partie(s) • ${jeuPlusJoue.points} pt(s)` : ''}</div>
+          </div>
+          <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg">
+            <div class="text-xs text-emerald-400">Meilleur rendement</div>
+            <div class="text-sm font-bold text-slate-100 mt-1 truncate">${jeuFetiche ? jeuFetiche.jeu : '—'}</div>
+            <div class="text-xs text-slate-400">${jeuFetiche ? `Moy. ${(jeuFetiche.points / jeuFetiche.parties).toFixed(2)} pt/p. (${jeuFetiche.victoires} 🥇)` : ''}</div>
+          </div>
+          <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg">
+            <div class="text-xs text-rose-400">Bête noire (≥ 2 parties)</div>
+            <div class="text-sm font-bold text-slate-100 mt-1 truncate">${beteNoire ? beteNoire.jeu : '—'}</div>
+            <div class="text-xs text-slate-400">${beteNoire ? `Moy. ${(beteNoire.points / beteNoire.parties).toFixed(2)} pt/p. (${beteNoire.points} pt(s))` : 'Pas assez de parties'}</div>
+          </div>
+        </div>
+
+        ${jeuxArray.length > 0 ? `
+          <div class="overflow-x-auto bg-slate-900/70 rounded-lg border border-slate-700/80">
+            <table class="w-full text-left border-collapse text-xs sm:text-sm">
+              <thead>
+                <tr class="border-b border-slate-700 text-slate-400 text-xs uppercase">
+                  <th class="p-2.5">Jeu</th>
+                  <th class="p-2.5 text-center">Parties</th>
+                  <th class="p-2.5 text-center">Points</th>
+                  <th class="p-2.5 text-center">Moy./Partie</th>
+                  <th class="p-2.5 text-center">🥇 Victoires</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800">
+                ${jeuxArray
+                  .sort((a, b) => b.parties - a.parties || b.points - a.points)
+                  .map(x => `
+                    <tr>
+                      <td class="p-2.5 font-medium">${x.jeu}</td>
+                      <td class="p-2.5 text-center">${x.parties}</td>
+                      <td class="p-2.5 text-center font-bold text-amber-400">${x.points}</td>
+                      <td class="p-2.5 text-center text-slate-300">${(x.points / x.parties).toFixed(2)}</td>
+                      <td class="p-2.5 text-center text-emerald-400">${x.victoires}</td>
+                    </tr>
+                  `).join('')}
+              </tbody>
+            </table>
+          </div>
+        ` : '<p class="text-slate-400 text-sm">Aucune partie enregistrée pour ce joueur sur la sélection actuelle.</p>'}
+      `;
+    }
+
+    function rendreStatsJeux(parties) {
+      const jeuxMap = {};
+      parties.forEach(p => {
+        const nom = p.nom_jeu;
+        if (!jeuxMap[nom]) {
+          jeuxMap[nom] = { nom, parties: 0, pointsTotal: 0, victoiresParJoueur: {} };
+        }
+        jeuxMap[nom].parties += 1;
+        p.resultats.forEach(r => {
+          jeuxMap[nom].pointsTotal += r.points;
+          if (r.position === 1 && r.joueurs) {
+            const jNom = r.joueurs.nom;
+            jeuxMap[nom].victoiresParJoueur[jNom] = (jeuxMap[nom].victoiresParJoueur[jNom] || 0) + 1;
+          }
+        });
+      });
+
+      const listeJeux = Object.values(jeuxMap).sort((a, b) => b.parties - a.parties || b.pointsTotal - a.pointsTotal);
+
+      document.getElementById('tbody-stats-jeux').innerHTML = listeJeux.map(j => {
+        const triGagnants = Object.entries(j.victoiresParJoueur).sort((a, b) => b[1] - a[1]);
+        const gagnantsTexte = triGagnants.length > 0
+          ? triGagnants.slice(0, 2).map(([nom, nb]) => `${nom} (${nb})`).join(', ')
+          : '—';
+        return `
+          <tr class="hover:bg-slate-700/30">
+            <td class="p-3 font-semibold">${j.nom}</td>
+            <td class="p-3 text-center font-bold text-amber-400">${j.parties}</td>
+            <td class="p-3 text-center">${j.pointsTotal}</td>
+            <td class="p-3 text-slate-300">${gagnantsTexte}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function rendrePalmares(partiesAll, champHist) {
+      const cartes = [];
+
+      champHist.forEach(c => {
+        cartes.push({
+          saison: c.saison,
+          champion: c.champion,
+          sousTitre: c.note || 'Archive'
+        });
+      });
+
+      const saisonsCalculees = [...new Set(partiesAll.map(p => p.saison))].sort((a, b) => a - b);
+      saisonsCalculees.forEach(s => {
+        const partiesSaison = partiesAll.filter(p => p.saison === s);
+        const stats = calculerStatsJoueurs(partiesSaison);
+        const classement = Object.values(stats).sort((a, b) => b.points - a.points || b.p1 - a.p1);
+        const leader = classement[0];
+        cartes.push({
+          saison: s,
+          champion: leader && leader.points > 0 ? leader.nom : 'En cours',
+          sousTitre: leader && leader.points > 0 ? `${leader.points} pts` : `${partiesSaison.length} p.`
+        });
+      });
+
+      document.getElementById('grille-palmares').innerHTML = cartes.map(item => `
+        <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl text-center flex flex-col justify-between">
+          <div class="text-xs font-bold text-slate-400">${item.saison}</div>
+          <div class="text-sm font-bold text-amber-400 my-1 truncate" title="${item.champion}">${item.champion}</div>
+          <div class="text-[11px] text-slate-400">${item.sousTitre}</div>
+        </div>
+      `).join('');
+    }
+
+    function rendreHistorique(parties) {
+      document.getElementById('liste-parties').innerHTML = parties.map(p => {
+        const resTries = [...p.resultats].sort((a, b) => a.position - b.position || b.points - a.points);
+        const badges = resTries.map(r => {
+          const medaille = r.position === 1 ? '🥇' : r.position === 2 ? '🥈' : r.position === 3 ? '🥉' : `${r.position}e`;
+          return `<span class="bg-slate-900 border border-slate-700 px-2.5 py-1 rounded text-xs">
+            ${medaille} <strong>${r.joueurs.nom}</strong> <span class="text-amber-400">(${r.points} pt${r.points > 1 ? 's' : ''})</span>
+          </span>`;
+        }).join(' ');
+
+        const btnSuppr = isAdmin ? `<button onclick="supprimerPartie(${p.id})" class="text-red-400 hover:text-red-300 text-xs ml-2">Supprimer</button>` : '';
+
+        return `
+          <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl flex flex-wrap justify-between items-center gap-3">
+            <div>
+              <div class="text-xs text-slate-400">${p.date_partie} ${btnSuppr}</div>
+              <div class="font-bold text-base text-slate-100">${p.nom_jeu}</div>
+            </div>
+            <div class="flex flex-wrap gap-2">${badges}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    document.getElementById('form-partie').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const date_partie = document.getElementById('date-partie').value;
+      const saison = parseInt(date_partie.split('-')[0]);
+      const nom_jeu = document.getElementById('nom-jeu').value.trim();
+      const mode = document.getElementById('mode-points').value;
+
+      const selects = document.querySelectorAll('.select-pos');
+      const participants = [];
+      selects.forEach(s => {
+        if (s.value !== '') {
+          const pos = parseInt(s.value);
+          participants.push({
+            joueur_id: parseInt(s.dataset.joueurId),
+            position: pos,
+            points: calculerPoints(pos, mode)
+          });
+        }
+      });
+
+      if (participants.length < 2) {
+        alert('Sélectionne au moins 2 joueurs présents.');
+        return;
+      }
+
+      const { data: partieCreee, error: errPartie } = await db
+        .from('parties')
+        .insert([{ date_partie, saison, nom_jeu }])
+        .select()
+        .single();
+
+      if (errPartie) {
+        alert('Erreur : ' + errPartie.message);
+        return;
+      }
+
+      const lignesResultats = participants.map(p => ({ ...p, partie_id: partieCreee.id }));
+      const { error: errRes } = await db.from('resultats').insert(lignesResultats);
+
+      if (errRes) {
+        alert('Erreur résultats : ' + errRes.message);
+        return;
+      }
+
+      document.getElementById('nom-jeu').value = '';
+      document.getElementById('mode-points').value = '321';
+      selects.forEach(s => {
+        s.value = '';
+        s.parentElement.querySelector('.pts-apercu').textContent = '—';
+      });
+      await chargerDonnees();
+    });
+
+    window.supprimerPartie = async (id) => {
+      if (!confirm('Supprimer cette partie ?')) return;
+      await db.from('parties').delete().eq('id', id);
+      await chargerDonnees();
+    };
+
+    document.getElementById('filtre-saison').addEventListener('change', chargerDonnees);
+    document.getElementById('select-joueur-stats').addEventListener('change', () => {
+      const filtreSaison = document.getElementById('filtre-saison').value;
+      const partiesFiltrees = filtreSaison === 'all'
+        ? toutesParties
+        : toutesParties.filter(p => p.saison === parseInt(filtreSaison));
+      rendreStatsJoueur(partiesFiltrees);
+    });
+
+    chargerJoueurs().then(verifierSession);
+  </script>
+</body>
+</html>
