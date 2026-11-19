@@ -11,7 +11,7 @@
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
 
   <div class="max-w-6xl mx-auto p-4 sm:p-6">
-    <!-- Bandeau d'erreur / info global -->
+    <!-- Bandeau d'erreur global -->
     <div id="debug-erreur" class="hidden bg-rose-950/90 border border-rose-500 text-rose-200 p-3.5 rounded-xl mb-6 text-sm whitespace-pre-wrap"></div>
 
     <!-- En-tête centré avec grand logo au-dessus du titre et des menus -->
@@ -30,7 +30,7 @@
 
       <div>
         <h1 class="text-2xl sm:text-4xl font-bold text-amber-400 tracking-tight">Classement & Statistiques</h1>
-        <p class="text-slate-400 text-sm mt-1">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant • 5 réguliers <span class="text-xs text-slate-500">(v13)</span></p>
+        <p class="text-slate-400 text-sm mt-1">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant • 5 réguliers <span class="text-xs text-slate-500">(v14)</span></p>
       </div>
 
       <div class="flex flex-wrap justify-center items-center gap-3 pt-1">
@@ -270,8 +270,8 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pZ3Z0aWlvbGpvZ3l3YmtlZWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwOTY1ODEsImV4cCI6MjExMDY3MjU4MX0.3nvZrlTvbLas8Znbqi4wrLy_XPlHvv53mJcxG3aJEH8';
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 5 JOUEURS PRINCIPAUX : Louis, Steeve, Patrick, Éric et Steven
-    const JOUEURS_EXACTS = ['louis', 'steeve', 'patrick', 'eric', 'steven'];
+    // 5 JOUEURS PRINCIPAUX : Louis, Steeve, Patrick, Gus (Éric) et Steven
+    const JOUEURS_REGULIERS = ['louis', 'steeve', 'patrick', 'gus', 'steven'];
     function normaliserNom(nom) {
       return (nom || '')
         .trim()
@@ -280,8 +280,7 @@
         .replace(/[\u0300-\u036f]/g, '');
     }
     function estJoueurRegulier(nom) {
-      const n = normaliserNom(nom);
-      return JOUEURS_EXACTS.includes(n) || n.includes('eric');
+      return JOUEURS_REGULIERS.includes(normaliserNom(nom));
     }
 
     // Durée à 5 minutes près
@@ -452,11 +451,6 @@
       const tousJoueurs = data || [];
       joueursList = tousJoueurs.filter(j => estJoueurRegulier(j.nom));
       joueursReguliersIds = new Set(joueursList.map(j => j.id));
-
-      if (joueursList.length < 5) {
-        const nomsDispos = tousJoueurs.map(j => `"${j.nom}" (id:${j.id})`).join(', ') || 'aucun';
-        afficherErreur(`Seulement ${joueursList.length} joueur(s) régulier(s) détecté(s) sur 5. Joueurs en base : ${nomsDispos}`);
-      }
 
       const grille = document.getElementById('grille-joueurs');
       grille.innerHTML = joueursList.map(j => construireCarteJoueurForm(j, '')).join('');
