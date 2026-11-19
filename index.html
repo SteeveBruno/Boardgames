@@ -11,10 +11,12 @@
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
 
   <div class="max-w-6xl mx-auto p-4 sm:p-6">
+    <!-- Bandeau d'erreur éventuel -->
+    <div id="debug-erreur" class="hidden bg-rose-950/90 border border-rose-500 text-rose-200 p-3.5 rounded-xl mb-6 text-sm"></div>
+
     <!-- En-tête avec emplacement du Logo -->
     <header class="flex flex-wrap justify-between items-center border-b border-slate-700 pb-4 mb-6 gap-4">
       <div class="flex items-center gap-3.5">
-        <!-- Remplace "logo.png" par le nom/chemin de ton fichier image (ex: logo.png, logo.svg) -->
         <img
           src="logo.png"
           alt="Logo Ligue de Jeux de Société"
@@ -187,6 +189,20 @@
     let isAdmin = false;
     let chartInstance = null;
 
+    function afficherErreur(message) {
+      const banner = document.getElementById('debug-erreur');
+      if (!banner) return;
+      banner.textContent = '⚠️ ' + message;
+      banner.classList.remove('hidden');
+    }
+
+    function effacerErreur() {
+      const banner = document.getElementById('debug-erreur');
+      if (!banner) return;
+      banner.textContent = '';
+      banner.classList.add('hidden');
+    }
+
     function calculerPoints(position, mode = '321') {
       if (mode === '1pt') return position === 1 ? 1 : 0;
       if (position === 1) return 3;
@@ -198,12 +214,19 @@
     document.getElementById('date-partie').valueAsDate = new Date();
 
     async function verifierSession() {
-      const { data: { session } } = await db.auth.getSession();
-      isAdmin = !!session;
-      document.getElementById('admin-panel').classList.toggle('hidden', !isAdmin);
-      document.getElementById('login-box').classList.add('hidden');
-      document.getElementById('btn-auth').textContent = isAdmin ? 'Déconnexion' : 'Connexion Admin';
-      await chargerDonnees();
+      try {
+        const { data: { session }, error } = await db.auth.getSession();
+        if (error) {
+          afficherErreur('Erreur de session auth : ' + error.message);
+        }
+        isAdmin = !!session;
+        document.getElementById('admin-panel').classList.toggle('hidden', !isAdmin);
+        document.getElementById('login-box').classList.add('hidden');
+        document.getElementById('btn-auth').textContent = isAdmin ? 'Déconnexion' : 'Connexion Admin';
+        await chargerDonnees();
+      } catch (err) {
+        afficherErreur('Exception lors de la vérification de session : ' + (err.message || err));
+      }
     }
 
     document.getElementById('btn-auth').addEventListener('click', async () => {
@@ -240,7 +263,14 @@
     document.getElementById('mode-points').addEventListener('change', rafraichirApercuPoints);
 
     async function chargerJoueurs() {
-      const { data } = await db.from('joueurs').select('*').order('nom');
+      const { data, error } = await db.from('joueurs').select('*').order('nom');
+      if (error) {
+        afficherErreur('Erreur lecture table "joueurs" : ' + error.message);
+        joueursList = [];
+        return;
+      }
+
+      effacerErreur();
       joueursList = data || [];
 
       const grille = document.getElementById('grille-joueurs');
@@ -285,17 +315,28 @@
     async function chargerDonnees() {
       const filtreSaison = document.getElementById('filtre-saison').value;
 
-      const { data: partiesAll } = await db
+      const { data: partiesAll, error: errParties } = await db
         .from('parties')
         .select('*, resultats(*, joueurs(*))')
         .order('date_partie', { ascending: false })
         .order('id', { ascending: false });
 
-      const { data: champHist } = await db
+      if (errParties) {
+        afficherErreur('Erreur lecture table "parties/resultats" : ' + errParties.message);
+        return;
+      }
+
+      const { data: champHist, error: errChamp } = await db
         .from('champions_historiques')
         .select('*')
         .order('saison');
 
+      if (errChamp) {
+        afficherErreur('Erreur lecture table "champions_historiques" : ' + errChamp.message);
+        return;
+      }
+
+      effacerErreur();
       toutesParties = partiesAll || [];
       championsHistoriques = champHist || [];
 
@@ -321,7 +362,7 @@
       });
 
       parties.forEach(p => {
-        p.resultats.forEach(r => {
+        (p.resultats || []).forEach(r => {
           if (!stats[r.joueur_id]) return;
           stats[r.joueur_id].points += r.points;
           stats[r.joueur_id].parties += 1;
@@ -368,12 +409,10 @@
 
       const titre = document.getElementById('titre-graphique');
 
-      // Ordre chronologique pour l'évolution
       const chrono = [...parties].sort((a, b) => a.date_partie.localeCompare(b.date_partie) || a.id - b.id);
 
-      // Identifier les joueurs ayant participé durant la période
       const actifsIds = new Set();
-      chrono.forEach(p => p.resultats.forEach(r => actifsIds.add(r.joueur_id)));
+      chrono.forEach(p => (p.resultats || []).forEach(r => actifsIds.add(r.joueur_id)));
       const joueursActifs = joueursList.filter(j => actifsIds.has(j.id));
 
       if (filtreSaison === 'all') {
@@ -386,7 +425,7 @@
             return chrono
               .filter(p => p.saison === s)
               .reduce((acc, p) => {
-                const r = p.resultats.find(x => x.joueur_id === j.id);
+                const r = (p.resultats || []).find(x => x.joueur_id === j.id);
                 return acc + (r ? r.points : 0);
               }, 0);
           }),
@@ -423,7 +462,7 @@
         datesUniques.forEach(d => {
           const partiesDuJour = chrono.filter(p => p.date_partie === d);
           partiesDuJour.forEach(p => {
-            p.resultats.forEach(r => {
+            (p.resultats || []).forEach(r => {
               if (cumuls[r.joueur_id] !== undefined) cumuls[r.joueur_id] += r.points;
             });
           });
@@ -467,7 +506,7 @@
       const parJeu = {};
 
       parties.forEach(p => {
-        const res = p.resultats.find(r => r.joueur_id === joueurId);
+        const res = (p.resultats || []).find(r => r.joueur_id === joueurId);
         if (!res) return;
 
         totalPts += res.points;
@@ -557,7 +596,7 @@
           jeuxMap[nom] = { nom, parties: 0, pointsTotal: 0, victoiresParJoueur: {} };
         }
         jeuxMap[nom].parties += 1;
-        p.resultats.forEach(r => {
+        (p.resultats || []).forEach(r => {
           jeuxMap[nom].pointsTotal += r.points;
           if (r.position === 1 && r.joueurs) {
             const jNom = r.joueurs.nom;
@@ -619,11 +658,12 @@
 
     function rendreHistorique(parties) {
       document.getElementById('liste-parties').innerHTML = parties.map(p => {
-        const resTries = [...p.resultats].sort((a, b) => a.position - b.position || b.points - a.points);
+        const resTries = [...(p.resultats || [])].sort((a, b) => a.position - b.position || b.points - a.points);
         const badges = resTries.map(r => {
           const medaille = r.position === 1 ? '🥇' : r.position === 2 ? '🥈' : r.position === 3 ? '🥉' : `${r.position}e`;
+          const nomJoueur = r.joueurs ? r.joueurs.nom : 'Joueur';
           return `<span class="bg-slate-900 border border-slate-700 px-2.5 py-1 rounded text-xs">
-            ${medaille} <strong>${r.joueurs.nom}</strong> <span class="text-amber-400">(${r.points} pt${r.points > 1 ? 's' : ''})</span>
+            ${medaille} <strong>${nomJoueur}</strong> <span class="text-amber-400">(${r.points} pt${r.points > 1 ? 's' : ''})</span>
           </span>`;
         }).join(' ');
 
