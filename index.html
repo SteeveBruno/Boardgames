@@ -30,7 +30,7 @@
 
       <div>
         <h1 class="text-2xl sm:text-4xl font-bold text-amber-400 tracking-tight">Classement & Statistiques</h1>
-        <p class="text-slate-400 text-sm mt-1">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant • 5 réguliers <span class="text-xs text-slate-500">(v17)</span></p>
+        <p class="text-slate-400 text-sm mt-1">Barème standard : 3 / 2 / 1 pt • Jeux courts : 1 pt au gagnant • 5 réguliers <span class="text-xs text-slate-500">(v19)</span></p>
       </div>
 
       <div class="flex flex-wrap justify-center items-center gap-3 pt-1">
@@ -46,6 +46,25 @@
           Connexion Admin
         </button>
       </div>
+
+      <!-- Menu de navigation par catégories -->
+      <nav aria-label="Catégories" class="flex flex-wrap justify-center gap-2 pt-2">
+        <button type="button" data-onglet="principal" class="btn-onglet px-4 py-2 rounded-xl text-sm font-semibold transition bg-amber-500 text-slate-900">
+          🏆 Classement & Historique
+        </button>
+        <button type="button" data-onglet="joueur" class="btn-onglet px-4 py-2 rounded-xl text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">
+          👤 Stats par joueur
+        </button>
+        <button type="button" data-onglet="jeu" class="btn-onglet px-4 py-2 rounded-xl text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">
+          🎯 Stats par jeu
+        </button>
+        <button type="button" data-onglet="palmares" class="btn-onglet px-4 py-2 rounded-xl text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">
+          👑 Palmarès
+        </button>
+        <button type="button" data-onglet="cimetiere" class="btn-onglet px-4 py-2 rounded-xl text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700">
+          🪦 Cimetière
+        </button>
+      </nav>
     </header>
 
     <!-- Liste des durées par tranches de 5 minutes -->
@@ -189,88 +208,133 @@
       </form>
     </section>
 
-    <!-- Tableau du Classement Général -->
-    <section class="mb-10">
-      <h2 class="text-xl font-bold mb-3">🏆 Classement</h2>
-      <div class="overflow-x-auto bg-slate-800 rounded-xl border border-slate-700">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="border-b border-slate-700 text-slate-400 text-xs uppercase">
-              <th class="p-3">#</th>
-              <th class="p-3">Joueur</th>
-              <th class="p-3 text-center">Points</th>
-              <th class="p-3 text-center">Parties</th>
-              <th class="p-3 text-center">Moy./Partie</th>
-              <th class="p-3 text-center">🥇 1er</th>
-              <th class="p-3 text-center">🥈 2e</th>
-              <th class="p-3 text-center">🥉 3e</th>
-              <th class="p-3 text-center">% Victoire</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-classement" class="divide-y divide-slate-700/60 text-sm">
-            <!-- Rempli par JS -->
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <!-- CATÉGORIE 1 : Classement, Graphique & Historique -->
+    <div id="onglet-principal">
+      <!-- Tableau du Classement Général -->
+      <section class="mb-10">
+        <h2 class="text-xl font-bold mb-3">🏆 Classement</h2>
+        <div class="overflow-x-auto bg-slate-800 rounded-xl border border-slate-700">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-700 text-slate-400 text-xs uppercase">
+                <th class="p-3">#</th>
+                <th class="p-3">Joueur</th>
+                <th class="p-3 text-center">Points</th>
+                <th class="p-3 text-center">Parties</th>
+                <th class="p-3 text-center">Moy./Partie</th>
+                <th class="p-3 text-center">🥇 1er</th>
+                <th class="p-3 text-center">🥈 2e</th>
+                <th class="p-3 text-center">🥉 3e</th>
+                <th class="p-3 text-center">% Victoire</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-classement" class="divide-y divide-slate-700/60 text-sm">
+              <!-- Rempli par JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-    <!-- Graphique d'évolution des points -->
-    <section class="mb-10 bg-slate-800 border border-slate-700 p-5 rounded-xl">
-      <h2 id="titre-graphique" class="text-xl font-bold mb-3">📈 Évolution cumulative des points</h2>
-      <div class="relative h-72 sm:h-80 w-full">
-        <canvas id="chart-evolution"></canvas>
-      </div>
-    </section>
+      <!-- Graphique d'évolution des points -->
+      <section class="mb-10 bg-slate-800 border border-slate-700 p-5 rounded-xl">
+        <h2 id="titre-graphique" class="text-xl font-bold mb-3">📈 Évolution cumulative des points</h2>
+        <div class="relative h-72 sm:h-80 w-full">
+          <canvas id="chart-evolution"></canvas>
+        </div>
+      </section>
 
-    <!-- Statistiques par joueur -->
-    <section class="mb-10 bg-slate-800/70 border border-slate-700 p-5 rounded-xl">
-      <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
-        <h2 class="text-xl font-bold">👤 Statistiques par joueur</h2>
-        <select id="select-joueur-stats" class="bg-slate-900 border border-slate-600 rounded px-3 py-1.5 text-sm font-semibold">
+      <!-- Historique des parties -->
+      <section>
+        <h2 class="text-xl font-bold mb-3">📅 Historique des parties</h2>
+        <div id="liste-parties" class="space-y-3">
           <!-- Rempli par JS -->
-        </select>
-      </div>
+        </div>
+      </section>
+    </div>
 
-      <div id="fiche-joueur" class="space-y-4">
-        <!-- Rempli par JS -->
-      </div>
-    </section>
-
-    <!-- Statistiques par jeu -->
-    <section class="mb-10">
-      <h2 class="text-xl font-bold mb-3">🎯 Statistiques par jeu</h2>
-      <div class="overflow-x-auto bg-slate-800 rounded-xl border border-slate-700">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="border-b border-slate-700 text-slate-400 text-xs uppercase">
-              <th class="p-3">Jeu</th>
-              <th class="p-3 text-center">Parties jouées</th>
-              <th class="p-3 text-center">Points distribués</th>
-              <th class="p-3">Gagnant(s) le(s) plus fréquent(s)</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-stats-jeux" class="divide-y divide-slate-700/60 text-sm">
+    <!-- CATÉGORIE 2 : Statistiques par joueur -->
+    <div id="onglet-joueur" class="hidden">
+      <section class="mb-10 bg-slate-800/70 border border-slate-700 p-5 rounded-xl">
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+          <h2 class="text-xl font-bold">👤 Statistiques par joueur</h2>
+          <select id="select-joueur-stats" class="bg-slate-900 border border-slate-600 rounded px-3 py-1.5 text-sm font-semibold">
             <!-- Rempli par JS -->
-          </tbody>
-        </table>
-      </div>
-    </section>
+          </select>
+        </div>
 
-    <!-- Palmarès des champions (2011 - 2026) -->
-    <section class="mb-10">
-      <h2 class="text-xl font-bold mb-3">👑 Palmarès des champions (2011–2026)</h2>
-      <div id="grille-palmares" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
-        <!-- Rempli par JS -->
-      </div>
-    </section>
+        <div id="fiche-joueur" class="space-y-4">
+          <!-- Rempli par JS -->
+        </div>
+      </section>
+    </div>
 
-    <!-- Historique des parties -->
-    <section>
-      <h2 class="text-xl font-bold mb-3">📅 Historique des parties</h2>
-      <div id="liste-parties" class="space-y-3">
-        <!-- Rempli par JS -->
-      </div>
-    </section>
+    <!-- CATÉGORIE 3 : Statistiques par jeu -->
+    <div id="onglet-jeu" class="hidden">
+      <section class="mb-10">
+        <h2 class="text-xl font-bold mb-3">🎯 Statistiques par jeu</h2>
+        <div class="overflow-x-auto bg-slate-800 rounded-xl border border-slate-700">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-700 text-slate-400 text-xs uppercase">
+                <th class="p-3">Jeu</th>
+                <th class="p-3 text-center">Parties jouées</th>
+                <th class="p-3 text-center">Points distribués</th>
+                <th class="p-3">Gagnant(s) le(s) plus fréquent(s)</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-stats-jeux" class="divide-y divide-slate-700/60 text-sm">
+              <!-- Rempli par JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- CATÉGORIE 4 : Palmarès des champions (2011 - 2026) -->
+    <div id="onglet-palmares" class="hidden">
+      <section class="mb-10">
+        <h2 class="text-xl font-bold mb-3">👑 Palmarès des champions (2011–2026)</h2>
+        <div id="grille-palmares" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
+          <!-- Rempli par JS -->
+        </div>
+      </section>
+    </div>
+
+    <!-- CATÉGORIE 5 : Cimetière (anciens joueurs) -->
+    <div id="onglet-cimetiere" class="hidden">
+      <section class="mb-10 bg-slate-800/70 border border-slate-700 p-5 sm:p-6 rounded-xl space-y-5">
+        <div>
+          <h2 class="text-xl font-bold text-slate-200">🪦 Le Cimetière des Anciens Joueurs</h2>
+          <p class="text-slate-400 text-sm mt-1">
+            Hommage ludique et sans rancune aux deux ex-réguliers qui ont rangé leurs meeples avant la fin de la partie. (Section à compléter à ta guise.)
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <article class="bg-slate-900/90 border border-slate-700 rounded-xl p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-bold text-amber-400">🪦 Kévin</h3>
+              <span class="text-xs text-slate-500 bg-slate-800 border border-slate-700 px-2.5 py-0.5 rounded-full">Ancien joueur</span>
+            </div>
+            <p class="text-xs text-slate-400 italic">« Épitaphe / anecdote de Kévin à rédiger ici. »</p>
+            <p class="text-sm text-slate-300">
+              Statut actuel : porté disparu autour de la table, présumé occupé ailleurs pendant que les autres comptent leurs points.
+            </p>
+          </article>
+
+          <article class="bg-slate-900/90 border border-slate-700 rounded-xl p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-bold text-amber-400">🪦 Étienne</h3>
+              <span class="text-xs text-slate-500 bg-slate-800 border border-slate-700 px-2.5 py-0.5 rounded-full">Ancien joueur</span>
+            </div>
+            <p class="text-xs text-slate-400 italic">« Épitaphe / anecdote d'Étienne à rédiger ici. »</p>
+            <p class="text-sm text-slate-300">
+              Statut actuel : officiellement retraité du classement, laissant le champ libre aux survivants de la ligue.
+            </p>
+          </article>
+        </div>
+      </section>
+    </div>
   </div>
 
   <script>
@@ -372,6 +436,34 @@
     let championsHistoriques = [];
     let isAdmin = false;
     let chartInstance = null;
+    let ongletActif = 'principal';
+
+    function changerOnglet(nomOnglet) {
+      ongletActif = nomOnglet;
+      ['principal', 'joueur', 'jeu', 'palmares', 'cimetiere'].forEach(cle => {
+        const panel = document.getElementById(`onglet-${cle}`);
+        if (panel) panel.classList.toggle('hidden', cle !== nomOnglet);
+      });
+
+      document.querySelectorAll('.btn-onglet').forEach(btn => {
+        const actif = btn.dataset.onglet === nomOnglet;
+        btn.className = actif
+          ? 'btn-onglet px-4 py-2 rounded-xl text-sm font-semibold transition bg-amber-500 text-slate-900'
+          : 'btn-onglet px-4 py-2 rounded-xl text-sm font-semibold transition bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700';
+      });
+
+      if (nomOnglet === 'principal') {
+        const filtreSaison = document.getElementById('filtre-saison').value;
+        const partiesFiltrees = filtreSaison === 'all'
+          ? toutesParties
+          : toutesParties.filter(p => p.saison === parseInt(filtreSaison));
+        rendreGraphique(partiesFiltrees, filtreSaison);
+      }
+    }
+
+    document.querySelectorAll('.btn-onglet').forEach(btn => {
+      btn.addEventListener('click', () => changerOnglet(btn.dataset.onglet));
+    });
 
     function calculerPoints(position, mode = '321') {
       if (mode === '1pt') return position === 1 ? 1 : 0;
@@ -594,7 +686,9 @@
         : toutesParties.filter(p => p.saison === parseInt(filtreSaison));
 
       rendreClassement(partiesFiltrees);
-      rendreGraphique(partiesFiltrees, filtreSaison);
+      if (ongletActif === 'principal') {
+        rendreGraphique(partiesFiltrees, filtreSaison);
+      }
       rendreStatsJoueur(partiesFiltrees);
       rendreStatsJeux(partiesFiltrees);
       rendrePalmares(toutesParties, championsHistoriques);
